@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { ExamResult } from '../models/ExamResult.js';
+import { Examination } from '../models/Examination.js';
+import { ExamSchedule } from '../models/ExamSchedule.js';
+import { Teacher } from '../models/Teacher.js';
 import { Student } from '../models/Student.js';
 import { Classroom } from '../models/Classroom.js';
 import { getOrCreateSettings, type IGradeRule } from '../models/SchoolSettings.js';
@@ -32,8 +35,15 @@ router.get('/names', async (req: AuthRequest, res) => {
       const assignedIds = await getTeacherAssignedClassIds(req.user);
       filter.classId = { $in: assignedIds };
     }
-    const names = await ExamResult.distinct('examName', filter);
-    res.json(names.sort());
+    const [resultNames, scheduledExams] = await Promise.all([
+      ExamResult.distinct('examName', filter),
+      Examination.find({}, 'name').lean(),
+    ]);
+    const merged = new Set<string>([
+      ...resultNames.map((n) => String(n)),
+      ...scheduledExams.map((e) => String(e.name)),
+    ]);
+    res.json(Array.from(merged).sort());
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to load exam names.';
     res.status(500).json({ error: message });
@@ -112,12 +122,50 @@ router.put('/marks', async (req: AuthRequest, res) => {
         res.status(403).json({ error: 'You are not assigned to this class.' });
         return;
       }
+      const teacherDoc = req.user.teacherRef
+        ? await Teacher.findById(req.user.teacherRef).lean()
+        : req.user.email
+        ? await Teacher.findOne({ email: req.user.email.toLowerCase() }).lean()
+        : null;
+      if (teacherDoc && teacherDoc.assignedSubjects.length > 0) {
+        const allowedSub = teacherDoc.assignedSubjects.some(
+          (s) => s.trim().toLowerCase() === subject.toLowerCase()
+        );
+        if (!allowedSub) {
+          res.status(403).json({ error: 'You are not authorized to enter marks for this subject.' });
+          return;
+        }
+      }
     }
 
     const classroom = await Classroom.findById(classId);
     if (!classroom) {
       res.status(404).json({ error: 'Class not found.' });
       return;
+    }
+
+    // Connect to Examination & ExamSchedule when Examination exists
+    const linkedExam = await Examination.findOne({
+      name: examName,
+      academicYear: classroom.academicYear,
+    }).lean() || await Examination.findOne({ name: examName }).lean();
+
+    if (linkedExam) {
+      const classSchedules = await ExamSchedule.find({
+        examinationId: linkedExam._id,
+        classId,
+      }).lean();
+      if (classSchedules.length > 0) {
+        const isScheduled = classSchedules.some(
+          (sc) => sc.subject.trim().toLowerCase() === subject.toLowerCase()
+        );
+        if (!isScheduled) {
+          res.status(400).json({
+            error: `Subject "${subject}" is not scheduled for ${classroom.name} under "${linkedExam.name}".`,
+          });
+          return;
+        }
+      }
     }
 
     const cleanedMarks: Array<{ studentId: string; score: number }> = [];
@@ -136,8 +184,10 @@ router.put('/marks', async (req: AuthRequest, res) => {
     const saved = await ExamResult.findOneAndUpdate(
       { examName, classId, subject },
       {
+        examinationId: linkedExam?._id || null,
         examName,
-        academicYear: classroom.academicYear,
+        academicYear: linkedExam?.academicYear || classroom.academicYear,
+        term: linkedExam?.term || '',
         classId,
         subject,
         maxMarks,

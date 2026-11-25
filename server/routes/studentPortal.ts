@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Student } from '../models/Student.js';
 import { Attendance } from '../models/Attendance.js';
 import { ExamResult } from '../models/ExamResult.js';
+import { ExamSchedule } from '../models/ExamSchedule.js';
 import { FeePayment } from '../models/FeePayment.js';
 import { Homework } from '../models/Homework.js';
 import { Announcement } from '../models/Announcement.js';
@@ -45,26 +46,39 @@ router.get('/overview', async (req: AuthRequest, res) => {
       return;
     }
 
-    const [classroom, settings, attendanceDocs, examDocs, payments, homework, announcements] =
-      await Promise.all([
-        Classroom.findById(student.classId)
-          .populate('classTeacherId', 'fullName phone email')
-          .lean(),
-        getOrCreateSettings(),
-        Attendance.find({ 'records.studentId': student._id }).sort({ date: -1 }).lean(),
-        ExamResult.find({ classId: student.classId }).sort({ examName: 1, subject: 1 }).lean(),
-        FeePayment.find({ studentId: student._id }).sort({ paymentDate: -1 }).lean(),
-        Homework.find({ classId: student.classId }).sort({ dueDate: -1, createdAt: -1 }).lean(),
-        Announcement.find({
-          $or: [
-            { targetRole: { $in: ['all', 'student'] } },
-            { targetRole: 'class', targetClassId: student.classId },
-          ],
-        })
-          .sort({ createdAt: -1 })
-          .limit(25)
-          .lean(),
-      ]);
+    const [
+      classroom,
+      settings,
+      attendanceDocs,
+      examDocs,
+      examSchedules,
+      payments,
+      homework,
+      announcements,
+    ] = await Promise.all([
+      Classroom.findById(student.classId)
+        .populate('classTeacherId', 'fullName phone email')
+        .lean(),
+      getOrCreateSettings(),
+      Attendance.find({ 'records.studentId': student._id }).sort({ date: -1 }).lean(),
+      ExamResult.find({ classId: student.classId }).sort({ examName: 1, subject: 1 }).lean(),
+      ExamSchedule.find({ classId: student.classId })
+        .populate('examinationId', 'name academicYear term startDate endDate status')
+        .populate('invigilatorId', 'fullName')
+        .sort({ examDate: 1, startTime: 1 })
+        .lean(),
+      FeePayment.find({ studentId: student._id }).sort({ paymentDate: -1 }).lean(),
+      Homework.find({ classId: student.classId }).sort({ dueDate: -1, createdAt: -1 }).lean(),
+      Announcement.find({
+        $or: [
+          { targetRole: { $in: ['all', 'student'] } },
+          { targetRole: 'class', targetClassId: student.classId },
+        ],
+      })
+        .sort({ createdAt: -1 })
+        .limit(25)
+        .lean(),
+    ]);
 
     const attendanceSummary = { Present: 0, Absent: 0, Late: 0, Excused: 0, total: 0, rate: 0 };
     const attendanceRecords: Array<{ date: string; status: string; note: string }> = [];
@@ -158,6 +172,7 @@ router.get('/overview', async (req: AuthRequest, res) => {
       attendanceSummary,
       attendanceRecords,
       reportCards,
+      examSchedules,
       feeSummary: {
         totalFee,
         paidAmount,

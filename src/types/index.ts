@@ -298,6 +298,7 @@ export interface StudentPortalOverview {
     payments: FeePayment[];
   };
   homework?: HomeworkItem[];
+  examSchedules?: ExamScheduleItem[];
   announcements: Announcement[];
 }
 
@@ -327,6 +328,109 @@ export interface ParentPortalOverview {
   settings: SchoolSettings;
   children: ParentPortalChildOverview[];
   announcements: Announcement[];
+}
+
+export type ExaminationStatus = 'Upcoming' | 'Ongoing' | 'Completed';
+
+export interface Examination {
+  _id: string;
+  name: string;
+  academicYear: string;
+  term: string;
+  startDate: string;
+  endDate: string;
+  totalDays: number;
+  description: string;
+  status: ExaminationStatus;
+  scheduleCount?: number;
+}
+
+export interface ExaminationDashboardStats {
+  totalExaminations: number;
+  upcomingExaminations: number;
+  ongoingExaminations: number;
+  completedExaminations: number;
+  totalScheduledClasses: number;
+  totalScheduledSubjects: number;
+  totalAssignedInvigilators: number;
+}
+
+export interface ExamScheduleItem {
+  _id: string;
+  examinationId:
+    | {
+        _id: string;
+        name: string;
+        academicYear: string;
+        term: string;
+        startDate: string;
+        endDate: string;
+        status: ExaminationStatus;
+      }
+    | string;
+  classId: { _id: string; name: string; academicYear: string } | string;
+  subject: string;
+  examDate: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  invigilatorId: { _id: string; teacherId: string; fullName: string; phone?: string } | string;
+  room: string;
+  notes: string;
+}
+
+export type ExamResultImportStatus = 'valid' | 'duplicate' | 'invalid';
+
+export interface ExamResultImportRow {
+  rowNumber: number;
+  studentId: string;
+  studentName: string;
+  className: string;
+  academicYear: string;
+  term: string;
+  examName: string;
+  subject: string;
+  totalMarks: string;
+  marksObtained: string;
+  rowStatus: ExamResultImportStatus;
+  errors: string[];
+  warnings: string[];
+  matchedStudentObjectId: string | null;
+  matchedClassId: string | null;
+  matchedExaminationId: string | null;
+  canonicalSubject: string;
+  canonicalExamName: string;
+  canonicalAcademicYear: string;
+  canonicalTerm: string;
+  numericTotalMarks: number | null;
+  numericMarksObtained: number | null;
+}
+
+export interface ExamResultImportSummary {
+  total: number;
+  valid: number;
+  duplicates: number;
+  invalid: number;
+  warnings: number;
+}
+
+export interface ExamResultImportUploadResponse {
+  fileName: string;
+  headersDetected: string[];
+  rows: ExamResultImportRow[];
+  summary: ExamResultImportSummary;
+  examinations: Array<{ _id: string; name: string; academicYear: string; term: string }>;
+  classrooms: Array<{ _id: string; name: string; subjects: string[] }>;
+}
+
+export interface ExamResultImportCommitResponse {
+  totalProcessed: number;
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  failedCount: number;
+  rejectedRows: ExamResultImportRow[];
 }
 
 export type BulkRowValidationStatus = 'valid' | 'duplicate' | 'invalid';

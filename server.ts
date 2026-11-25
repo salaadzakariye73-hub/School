@@ -13,6 +13,8 @@ import teacherRoutes from './server/routes/teachers.js';
 import studentImportRoutes from './server/routes/studentImport.js';
 import studentRoutes from './server/routes/students.js';
 import attendanceRoutes from './server/routes/attendance.js';
+import examinationsRoutes from './server/routes/examinations.js';
+import examImportRoutes from './server/routes/examImport.js';
 import examRoutes from './server/routes/exams.js';
 import feeRoutes from './server/routes/fees.js';
 import dashboardRoutes from './server/routes/dashboard.js';
@@ -70,6 +72,8 @@ async function startServer() {
   app.use('/api/students/import', studentImportRoutes);
   app.use('/api/students', studentRoutes);
   app.use('/api/attendance', attendanceRoutes);
+  app.use('/api/examinations', examinationsRoutes);
+  app.use('/api/exams/import', examImportRoutes);
   app.use('/api/exams', examRoutes);
   app.use('/api/fees', feeRoutes);
   app.use('/api/dashboard', dashboardRoutes);

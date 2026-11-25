@@ -816,10 +816,11 @@ export function normalizeDateCell(raw: string): string {
   return s;
 }
 
-export async function parseSpreadsheetBuffer(
+export async function extractSpreadsheetGrid(
   buffer: Buffer,
-  fileName: string
-): Promise<{ headers: string[]; rows: ParsedStudentInputRow[] }> {
+  fileName: string,
+  minCols: number = STUDENT_TEMPLATE_COLUMNS.length
+): Promise<string[][]> {
   const lower = fileName.toLowerCase();
   let grid: string[][] = [];
 
@@ -834,7 +835,7 @@ export async function parseSpreadsheetBuffer(
     }
     worksheet.eachRow({ includeEmpty: false }, (row) => {
       const vals: string[] = [];
-      const colCount = Math.max(row.cellCount, STUDENT_TEMPLATE_COLUMNS.length);
+      const colCount = Math.max(row.cellCount, minCols);
       for (let c = 1; c <= colCount; c++) {
         vals.push(extractExcelCellText(row.getCell(c).value));
       }
@@ -858,6 +859,15 @@ export async function parseSpreadsheetBuffer(
   } else {
     throw new Error('Unsupported file type. Please upload a .xlsx, .xls, or .csv file.');
   }
+
+  return grid;
+}
+
+export async function parseSpreadsheetBuffer(
+  buffer: Buffer,
+  fileName: string
+): Promise<{ headers: string[]; rows: ParsedStudentInputRow[] }> {
+  const grid = await extractSpreadsheetGrid(buffer, fileName, STUDENT_TEMPLATE_COLUMNS.length);
 
   if (grid.length < 2) {
     throw new Error('The uploaded file must include a header row and at least one student row.');

@@ -1,11 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Printer, FileText } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CalendarClock, FileSpreadsheet, Printer, FileText, Info, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { apiRequest } from '../utils/api';
 import { Modal } from '../components/ui/Modal';
 import { SchoolCrest } from '../components/ui/SchoolCrest';
-import type { Classroom, SchoolSettings, Student } from '../types';
+import { ExamTimetableManager } from '../components/exams/ExamTimetableManager';
+import { BulkExamResultsImportModal } from '../components/exams/BulkExamResultsImportModal';
+import type {
+  Classroom,
+  Examination,
+  ExamScheduleItem,
+  SchoolSettings,
+  Student,
+} from '../types';
 
 interface MarkRow {
   studentId: string;
@@ -62,12 +70,15 @@ interface ReportCardData {
 export function ExamsPage() {
   const { settings } = useAuth();
   const { lang, tr } = useTheme();
-  const [tab, setTab] = useState<'marks' | 'results'>('marks');
+  const [tab, setTab] = useState<'timetable' | 'marks' | 'results'>('timetable');
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
 
   const [classes, setClasses] = useState<Classroom[]>([]);
   const [examNames, setExamNames] = useState<string[]>([]);
+  const [examinations, setExaminations] = useState<Examination[]>([]);
+  const [examSchedules, setExamSchedules] = useState<ExamScheduleItem[]>([]);
 
-  const [examName, setExamName] = useState('Midterm Exam 2026');
+  const [examName, setExamName] = useState('');
   const [classId, setClassId] = useState('');
   const [subject, setSubject] = useState('');
   const [maxMarks, setMaxMarks] = useState(100);
@@ -88,12 +99,16 @@ export function ExamsPage() {
 
   const loadInit = useCallback(async () => {
     try {
-      const [classList, names] = await Promise.all([
+      const [classList, names, examsRes, schedulesRes] = await Promise.all([
         apiRequest<Classroom[]>('/api/classes'),
         apiRequest<string[]>('/api/exams/names'),
+        apiRequest<{ examinations: Examination[] }>('/api/examinations'),
+        apiRequest<ExamScheduleItem[]>('/api/examinations/schedules'),
       ]);
       setClasses(classList);
       setExamNames(names);
+      setExaminations(examsRes.examinations || []);
+      setExamSchedules(schedulesRes || []);
 
       if (classList.length > 0) {
         const first = classList[0];
@@ -104,7 +119,10 @@ export function ExamsPage() {
         }
       }
       if (names.length > 0) {
+        setExamName((prev) => prev || names[0]);
         setResultsExamName((prev) => prev || names[0]);
+      } else {
+        setExamName((prev) => prev || 'Midterm Exam 2026');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load classes.');
@@ -116,17 +134,46 @@ export function ExamsPage() {
   }, [loadInit]);
 
   const selectedClassroom = classes.find((c) => c._id === classId);
-  const availableSubjects = selectedClassroom?.subjects || [];
+
+  const { availableSubjects, hasLinkedExam, hasScheduledSubjectsForClass } = useMemo(() => {
+    const trimmedExam = examName.trim().toLowerCase();
+    const matchedExams = trimmedExam
+      ? examinations.filter((ex) => ex.name.trim().toLowerCase() === trimmedExam)
+      : [];
+    const matchedExamIds = new Set(matchedExams.map((ex) => ex._id));
+    const scheduledForClass = Array.from(
+      new Set(
+        examSchedules
+          .filter((sc) => {
+            const scExamId =
+              typeof sc.examinationId === 'object' ? sc.examinationId._id : sc.examinationId;
+            const scClassId = typeof sc.classId === 'object' ? sc.classId._id : sc.classId;
+            return matchedExamIds.has(scExamId) && scClassId === classId;
+          })
+          .map((sc) => sc.subject)
+      )
+    );
+    const linked = matchedExams.length > 0;
+    const subjectsList =
+      linked && scheduledForClass.length > 0
+        ? scheduledForClass
+        : selectedClassroom?.subjects || [];
+    return {
+      availableSubjects: subjectsList,
+      hasLinkedExam: linked,
+      hasScheduledSubjectsForClass: scheduledForClass.length > 0,
+    };
+  }, [examName, examinations, examSchedules, classId, selectedClassroom]);
 
   useEffect(() => {
-    if (selectedClassroom && selectedClassroom.subjects.length > 0) {
-      if (!selectedClassroom.subjects.includes(subject)) {
-        setSubject(selectedClassroom.subjects[0]);
+    if (availableSubjects.length > 0) {
+      if (!availableSubjects.includes(subject)) {
+        setSubject(availableSubjects[0]);
       }
     } else {
       setSubject('');
     }
-  }, [selectedClassroom, subject]);
+  }, [availableSubjects, subject]);
 
   const loadMarks = useCallback(async () => {
     if (!examName.trim() || !classId || !subject) return;
@@ -227,29 +274,52 @@ export function ExamsPage() {
 
   return (
     <div className="space-y-4">
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 no-print">
+      {/* Tabs & Bulk Results Import Action */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 no-print">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTab('timetable')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
+              tab === 'timetable'
+                ? 'bg-[#0F294A] text-white dark:bg-blue-600'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            <CalendarClock className="w-4 h-4" />
+            <span>{tr('examManagementTab')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('marks')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
+              tab === 'marks'
+                ? 'bg-[#0F294A] text-white dark:bg-blue-600'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            {tr('enterMarksTab')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('results')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
+              tab === 'results'
+                ? 'bg-[#0F294A] text-white dark:bg-blue-600'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            {tr('classResultsTab')}
+          </button>
+        </div>
+
         <button
           type="button"
-          onClick={() => setTab('marks')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
-            tab === 'marks'
-              ? 'bg-[#0F294A] text-white dark:bg-blue-600'
-              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-          }`}
+          onClick={() => setBulkImportOpen(true)}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#0F294A] dark:border-blue-500 text-[#0F294A] dark:text-blue-400 hover:bg-[#0F294A]/5 dark:hover:bg-blue-950/40 text-sm font-medium transition-colors whitespace-nowrap shrink-0"
         >
-          {tr('enterMarksTab')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('results')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
-            tab === 'results'
-              ? 'bg-[#0F294A] text-white dark:bg-blue-600'
-              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
-          }`}
-        >
-          {tr('classResultsTab')}
+          <FileSpreadsheet className="w-4 h-4" />
+          <span>{tr('excelResultsImportBtn')}</span>
         </button>
       </div>
 
@@ -265,7 +335,9 @@ export function ExamsPage() {
         </div>
       )}
 
-      {tab === 'marks' ? (
+      {tab === 'timetable' ? (
+        <ExamTimetableManager classes={classes} onExamsUpdated={loadInit} />
+      ) : tab === 'marks' ? (
         <div className="space-y-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
             <div>
@@ -343,6 +415,20 @@ export function ExamsPage() {
               {savingMarks ? tr('loading') : tr('saveMarks')}
             </button>
           </div>
+
+          {hasLinkedExam && hasScheduledSubjectsForClass && (
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300">
+              <Info className="w-4 h-4 text-[#0F294A] dark:text-blue-400 shrink-0" />
+              <span>{tr('scheduledExamHint')}</span>
+            </div>
+          )}
+
+          {hasLinkedExam && !hasScheduledSubjectsForClass && (
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{tr('noScheduledExamWarning')}</span>
+            </div>
+          )}
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
@@ -663,6 +749,18 @@ export function ExamsPage() {
           </div>
         ) : null}
       </Modal>
+
+      <BulkExamResultsImportModal
+        open={bulkImportOpen}
+        onClose={() => setBulkImportOpen(false)}
+        examinations={examinations}
+        classes={classes}
+        onImported={async () => {
+          await loadInit();
+          if (tab === 'marks') await loadMarks();
+          if (tab === 'results') await loadClassResults();
+        }}
+      />
     </div>
   );
 }
