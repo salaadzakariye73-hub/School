@@ -159,6 +159,7 @@ router.post('/', requireRoles('admin'), async (req, res) => {
     const dateOfBirth = asString(req.body?.dateOfBirth);
     const parentName = asString(req.body?.parentName);
     const parentPhone = asString(req.body?.parentPhone);
+    const address = asString(req.body?.address);
     const classId = asString(req.body?.classId);
     const academicYear = asString(req.body?.academicYear);
     const admissionDate = asString(req.body?.admissionDate);
@@ -194,6 +195,7 @@ router.post('/', requireRoles('admin'), async (req, res) => {
       dateOfBirth,
       parentName,
       parentPhone,
+      address,
       classId,
       academicYear,
       admissionDate,
@@ -234,6 +236,7 @@ router.put('/:id', requireRoles('admin'), async (req, res) => {
     const dateOfBirth = asString(req.body?.dateOfBirth);
     const parentName = asString(req.body?.parentName);
     const parentPhone = asString(req.body?.parentPhone);
+    const address = req.body?.address !== undefined ? asString(req.body?.address) : student.address || '';
     const classId = asString(req.body?.classId);
     const academicYear = asString(req.body?.academicYear);
     const admissionDate = asString(req.body?.admissionDate);
@@ -262,6 +265,7 @@ router.put('/:id', requireRoles('admin'), async (req, res) => {
     student.dateOfBirth = dateOfBirth;
     student.parentName = parentName;
     student.parentPhone = parentPhone;
+    student.address = address;
     student.classId = classId as unknown as typeof student.classId;
     student.academicYear = academicYear;
     student.admissionDate = admissionDate;

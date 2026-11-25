@@ -26,7 +26,7 @@ export async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers = new Headers(options.headers || {});
-  if (!headers.has('Content-Type') && options.body) {
+  if (!headers.has('Content-Type') && options.body && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
   if (inMemoryToken) {
@@ -59,4 +59,94 @@ export async function apiRequest<T>(
   }
 
   return data as T;
+}
+
+export function apiUploadWithProgress<T>(
+  path: string,
+  formData: FormData,
+  onProgress?: (percent: number) => void
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_BASE}${path}`, true);
+    if (inMemoryToken) {
+      xhr.setRequestHeader('Authorization', `Bearer ${inMemoryToken}`);
+    }
+
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable && onProgress) {
+        const pct = Math.min(95, Math.round((ev.loaded / ev.total) * 90));
+        onProgress(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      if (onProgress) onProgress(100);
+      let parsed: unknown = null;
+      try {
+        parsed = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+      } catch {
+        parsed = null;
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(parsed as T);
+      } else {
+        const errObj = (parsed && typeof parsed === 'object' ? parsed : {}) as {
+          error?: string;
+          code?: string;
+        };
+        reject(
+          new ApiError(
+            errObj.error || `Upload failed (${xhr.status})`,
+            xhr.status,
+            errObj.code
+          )
+        );
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new ApiError('Network error while uploading file.', 0));
+    };
+
+    xhr.send(formData);
+  });
+}
+
+export async function apiDownloadBlob(path: string, fallbackFileName: string): Promise<void> {
+  const headers = new Headers();
+  if (inMemoryToken) {
+    headers.set('Authorization', `Bearer ${inMemoryToken}`);
+  }
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    let errMsg = `Download failed (${response.status})`;
+    try {
+      const json = (await response.json()) as { error?: string };
+      if (json?.error) errMsg = json.error;
+    } catch {
+      // ignore non-json error
+    }
+    throw new ApiError(errMsg, response.status);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  const fileName = match ? match[1] : fallbackFileName;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

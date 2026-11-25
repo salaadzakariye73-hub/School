@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Search, Eye, Pencil, Trash2, Printer } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, Printer, FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { apiRequest } from '../utils/api';
@@ -8,6 +8,7 @@ import { resizeImageFileToDataUrl } from '../utils/image';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { SchoolCrest } from '../components/ui/SchoolCrest';
+import { BulkStudentImportModal } from '../components/students/BulkStudentImportModal';
 import type { Classroom, Student, StudentStatus } from '../types';
 
 interface StudentProfileData {
@@ -52,6 +53,7 @@ export function StudentsPage() {
 
   const [profileData, setProfileData] = useState<StudentProfileData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [form, setForm] = useState({
     studentId: '',
@@ -60,6 +62,7 @@ export function StudentsPage() {
     dateOfBirth: '',
     parentName: '',
     parentPhone: '',
+    address: '',
     classId: '',
     academicYear: settings?.academicYear || '2026-2027',
     admissionDate: new Date().toISOString().slice(0, 10),
@@ -105,6 +108,7 @@ export function StudentsPage() {
       dateOfBirth: '2012-01-01',
       parentName: '',
       parentPhone: '',
+      address: '',
       classId: classes[0]?._id || '',
       academicYear: settings?.academicYear || '2026-2027',
       admissionDate: new Date().toISOString().slice(0, 10),
@@ -126,6 +130,7 @@ export function StudentsPage() {
       dateOfBirth: stu.dateOfBirth,
       parentName: stu.parentName,
       parentPhone: stu.parentPhone,
+      address: stu.address || '',
       classId: clsId,
       academicYear: stu.academicYear,
       admissionDate: stu.admissionDate,
@@ -256,14 +261,25 @@ export function StudentsPage() {
         </div>
 
         {isAdmin && (
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium transition-colors whitespace-nowrap shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{tr('addStudent')}</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium transition-colors whitespace-nowrap shrink-0"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-[#0F294A] dark:text-blue-400" />
+              <span>{tr('excelImport')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium transition-colors whitespace-nowrap shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{tr('addStudent')}</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -545,6 +561,19 @@ export function StudentsPage() {
 
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {tr('addressLabel')}
+              </label>
+              <input
+                type="text"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="Hodan, Mogadishu"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 {tr('photoLabel')}
               </label>
               <div className="flex items-center gap-3">
@@ -679,6 +708,12 @@ export function StudentsPage() {
                 <div className="text-xs text-slate-500">{tr('admissionDate')}</div>
                 <div className="font-mono">{profileData.student.admissionDate}</div>
               </div>
+              {profileData.student.address && (
+                <div className="col-span-2 sm:col-span-3">
+                  <div className="text-xs text-slate-500">{tr('addressLabel')}</div>
+                  <div>{profileData.student.address}</div>
+                </div>
+              )}
             </div>
 
             {/* Attendance Summary */}
@@ -818,6 +853,15 @@ export function StudentsPage() {
         onConfirm={() => void handleDelete()}
         loading={deleting}
       />
+
+      {isAdmin && (
+        <BulkStudentImportModal
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          onImported={loadData}
+          classes={classes}
+        />
+      )}
     </div>
   );
 }

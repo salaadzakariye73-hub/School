@@ -120,6 +120,7 @@ export interface Student {
   dateOfBirth: string;
   parentName: string;
   parentPhone: string;
+  address?: string;
   photoUrl?: string;
   classId: { _id: string; name: string; academicYear: string; tuitionFee: number; subjects?: string[] } | string;
   academicYear: string;
@@ -326,4 +327,59 @@ export interface ParentPortalOverview {
   settings: SchoolSettings;
   children: ParentPortalChildOverview[];
   announcements: Announcement[];
+}
+
+export type BulkRowValidationStatus = 'valid' | 'duplicate' | 'invalid';
+
+export interface BulkImportRow {
+  rowNumber: number;
+  studentId: string;
+  fullName: string;
+  gender: string;
+  className: string;
+  parentName: string;
+  parentPhone: string;
+  address: string;
+  dateOfBirth: string;
+  admissionDate: string;
+  status: string;
+  rowStatus: BulkRowValidationStatus;
+  errors: string[];
+  warnings: string[];
+  matchedClassId: string | null;
+  matchedClassName: string;
+  academicYear: string;
+  normalizedGender: 'Male' | 'Female' | null;
+  normalizedStatus: StudentStatus;
+}
+
+export interface BulkImportValidationSummary {
+  total: number;
+  valid: number;
+  duplicates: number;
+  invalid: number;
+  warnings: number;
+}
+
+export interface BulkImportUploadResponse {
+  fileName: string;
+  headersDetected: string[];
+  rows: BulkImportRow[];
+  summary: BulkImportValidationSummary;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string }>;
+}
+
+export interface BulkImportValidateResponse {
+  rows: BulkImportRow[];
+  summary: BulkImportValidationSummary;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string }>;
+}
+
+export interface BulkImportCommitResponse {
+  totalProcessed: number;
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  failedCount: number;
+  rejectedRows: BulkImportRow[];
 }

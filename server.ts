@@ -10,6 +10,7 @@ import userRoutes from './server/routes/users.js';
 import settingsRoutes from './server/routes/settings.js';
 import classRoutes from './server/routes/classes.js';
 import teacherRoutes from './server/routes/teachers.js';
+import studentImportRoutes from './server/routes/studentImport.js';
 import studentRoutes from './server/routes/students.js';
 import attendanceRoutes from './server/routes/attendance.js';
 import examRoutes from './server/routes/exams.js';
@@ -66,6 +67,7 @@ async function startServer() {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/classes', classRoutes);
   app.use('/api/teachers', teacherRoutes);
+  app.use('/api/students/import', studentImportRoutes);
   app.use('/api/students', studentRoutes);
   app.use('/api/attendance', attendanceRoutes);
   app.use('/api/exams', examRoutes);
