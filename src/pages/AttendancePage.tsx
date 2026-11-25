@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Printer, Download } from 'lucide-react';
+import { Check, Printer, Download, Lock, Unlock, ShieldAlert, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { apiRequest } from '../utils/api';
 import { downloadCsv } from '../utils/export';
@@ -9,6 +10,7 @@ interface AttendanceReportData {
   mode: 'daily' | 'monthly';
   period: string;
   sessionsCount: number;
+  hiddenLockedSessions?: number;
   summary: {
     Present: number;
     Absent: number;
@@ -32,13 +34,22 @@ interface AttendanceReportData {
 }
 
 export function AttendancePage() {
+  const { user } = useAuth();
   const { tr } = useTheme();
+  const isTeacher = user?.role === 'teacher';
+  const isAdmin = user?.role === 'admin';
+
   const [tab, setTab] = useState<'mark' | 'report'>('mark');
 
   const [classes, setClasses] = useState<Classroom[]>([]);
   const [selectedClass, setSelectedClass] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [rows, setRows] = useState<AttendanceRow[]>([]);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockedForTeacher, setLockedForTeacher] = useState(false);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -63,16 +74,31 @@ export function AttendancePage() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load classes.'));
   }, []);
 
+  useEffect(() => {
+    if (!confirmSubmitOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !saving) {
+        setConfirmSubmitOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [confirmSubmitOpen, saving]);
+
   const loadAttendance = useCallback(async () => {
     if (!selectedClass || !date) return;
     setLoading(true);
     setError(null);
     setMessage(null);
     try {
-      const data = await apiRequest<{ records: AttendanceRow[] }>(
-        `/api/attendance?classId=${encodeURIComponent(selectedClass)}&date=${encodeURIComponent(date)}`
-      );
-      setRows(data.records);
+      const data = await apiRequest<{
+        locked?: boolean;
+        lockedForTeacher?: boolean;
+        records: AttendanceRow[];
+      }>(`/api/attendance?classId=${encodeURIComponent(selectedClass)}&date=${encodeURIComponent(date)}`);
+      setIsLocked(Boolean(data.locked));
+      setLockedForTeacher(Boolean(data.lockedForTeacher));
+      setRows(data.locked ? [] : data.records);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load attendance.');
     } finally {
@@ -87,32 +113,71 @@ export function AttendancePage() {
   }, [tab, loadAttendance]);
 
   const setStudentStatus = (studentId: string, status: AttendanceStatus) => {
+    if (isLocked) return;
     setRows((prev) => prev.map((r) => (r.studentId === studentId ? { ...r, status } : r)));
   };
 
   const setStudentNote = (studentId: string, note: string) => {
+    if (isLocked) return;
     setRows((prev) => prev.map((r) => (r.studentId === studentId ? { ...r, note } : r)));
   };
 
   const markAllPresent = () => {
+    if (isLocked) return;
     setRows((prev) => prev.map((r) => ({ ...r, status: 'Present' })));
   };
 
-  const handleSave = async () => {
-    if (!selectedClass || !date) return;
+  const executeSave = async () => {
+    if (!selectedClass || !date || isLocked) return;
     setSaving(true);
     setError(null);
     setMessage(null);
     try {
-      await apiRequest('/api/attendance', {
+      const res = await apiRequest<{ locked?: boolean; lockedForTeacher?: boolean }>('/api/attendance', {
         method: 'PUT',
         body: JSON.stringify({ classId: selectedClass, date, records: rows }),
       });
-      setMessage(tr('attendanceSaved'));
+      setConfirmSubmitOpen(false);
+      if (isTeacher || res.locked) {
+        setRows([]);
+        setIsLocked(true);
+        setLockedForTeacher(true);
+        setMessage(tr('attendanceSavedLocked'));
+      } else {
+        setLockedForTeacher(Boolean(res.lockedForTeacher));
+        setMessage(tr('attendanceSaved'));
+      }
     } catch (err) {
+      setConfirmSubmitOpen(false);
       setError(err instanceof Error ? err.message : 'Failed to save attendance.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (!selectedClass || !date || isLocked || rows.length === 0) return;
+    if (isTeacher) {
+      setConfirmSubmitOpen(true);
+    } else {
+      void executeSave();
+    }
+  };
+
+  const handleAdminUnlock = async () => {
+    if (!isAdmin || !selectedClass || !date) return;
+    setUnlocking(true);
+    setError(null);
+    try {
+      await apiRequest('/api/attendance/unlock', {
+        method: 'PATCH',
+        body: JSON.stringify({ classId: selectedClass, date }),
+      });
+      setLockedForTeacher(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to unlock attendance.');
+    } finally {
+      setUnlocking(false);
     }
   };
 
@@ -238,52 +303,85 @@ export function AttendancePage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={markAllPresent}
-                disabled={rows.length === 0}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap shrink-0"
-              >
-                <Check className="w-4 h-4" />
-                <span>{tr('markAllPresent')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={saving || rows.length === 0}
-                className="px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-sm font-medium disabled:opacity-60 whitespace-nowrap shrink-0"
-              >
-                {saving ? tr('loading') : tr('saveAttendance')}
-              </button>
-            </div>
+            {!isLocked && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={markAllPresent}
+                  disabled={rows.length === 0 || isLocked}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap shrink-0 disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{tr('markAllPresent')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={saving || rows.length === 0 || isLocked}
+                  className="px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-sm font-medium disabled:opacity-60 whitespace-nowrap shrink-0"
+                >
+                  {saving ? tr('loading') : tr('saveAttendance')}
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">{tr('studentId')}</th>
-                    <th className="px-4 py-3 font-semibold">{tr('fullName')}</th>
-                    <th className="px-4 py-3 font-semibold">{tr('status')}</th>
-                    <th className="px-4 py-3 font-semibold">{tr('note')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {loading ? (
+          {isAdmin && lockedForTeacher && !isLocked && (
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-[#0F294A] dark:text-blue-400 shrink-0" />
+                <span className="font-medium">{tr('lockedForTeacherBadge')}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleAdminUnlock()}
+                disabled={unlocking}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+                <span>{unlocking ? tr('loading') : tr('unlockForTeacher')}</span>
+              </button>
+            </div>
+          )}
+
+          {isLocked ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-10 text-center space-y-3">
+              <div className="w-12 h-12 mx-auto rounded-full bg-[#0F294A]/10 dark:bg-blue-950/60 flex items-center justify-center text-[#0F294A] dark:text-blue-400">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                {tr('attendanceLockedTitle')}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                {tr('attendanceLockedDesc')}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
                     <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                        {tr('loading')}
-                      </td>
+                      <th className="px-4 py-3 font-semibold">{tr('studentId')}</th>
+                      <th className="px-4 py-3 font-semibold">{tr('fullName')}</th>
+                      <th className="px-4 py-3 font-semibold">{tr('status')}</th>
+                      <th className="px-4 py-3 font-semibold">{tr('note')}</th>
                     </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                        {tr('noData')}
-                      </td>
-                    </tr>
-                  ) : (
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                          {tr('loading')}
+                        </td>
+                      </tr>
+                    ) : rows.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                          {tr('noData')}
+                        </td>
+                      </tr>
+                    ) : (
                     rows.map((row) => (
                       <tr key={row.studentId} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                         <td className="px-4 py-3 font-mono text-xs tabular-nums text-slate-600 dark:text-slate-300">
@@ -326,6 +424,7 @@ export function AttendancePage() {
               </table>
             </div>
           </div>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -427,6 +526,13 @@ export function AttendancePage() {
             </div>
           </div>
 
+          {isTeacher && (reportData?.hiddenLockedSessions || 0) > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 no-print">
+              <Lock className="w-4 h-4 text-[#0F294A] dark:text-blue-400 shrink-0" />
+              <span>{tr('attendanceReportHiddenNote')}</span>
+            </div>
+          )}
+
           {reportData && (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3">
@@ -508,6 +614,55 @@ export function AttendancePage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Confirmation Dialog ("bashqad yar kor looga soo diro") for Teachers */}
+      {confirmSubmitOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-5 sm:pt-8 px-4 bg-slate-950/45 backdrop-blur-[1px]"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border-2 border-[#0F294A] dark:border-blue-500 rounded-xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#0F294A] dark:bg-blue-700 text-white">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <h3 className="text-sm font-semibold">{tr('confirmAttendanceTitle')}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => !saving && setConfirmSubmitOpen(false)}
+                className="p-1 rounded hover:bg-white/15 transition-colors"
+                aria-label={tr('cancel')}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                {tr('confirmAttendanceMessage')}
+              </p>
+              <div className="flex items-center justify-end gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setConfirmSubmitOpen(false)}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {tr('cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void executeSave()}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-60"
+                >
+                  {saving ? tr('loading') : tr('yesSaveAttendance')}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -235,6 +235,19 @@ export const translations = {
     markAllPresent: 'Mark All Present',
     saveAttendance: 'Save Attendance',
     attendanceSaved: 'Attendance saved successfully.',
+    confirmAttendanceTitle: 'Are you sure you want to save attendance?',
+    confirmAttendanceMessage:
+      'Once you click Yes, this attendance will be locked and hidden from you. You will no longer be able to view or edit these records.',
+    yesSaveAttendance: 'Yes, Save & Lock',
+    attendanceSavedLocked:
+      'Attendance saved and locked. Records are now hidden and only visible to the School Admin.',
+    attendanceLockedTitle: 'Attendance Submitted & Locked',
+    attendanceLockedDesc:
+      'Attendance for this class and date has already been saved. Records are hidden and cannot be viewed or edited again by teachers.',
+    attendanceReportHiddenNote:
+      'Submitted attendance records are locked and hidden from teachers. Only the School Admin can view full attendance logs.',
+    unlockForTeacher: 'Unlock for Teacher',
+    lockedForTeacherBadge: 'Submitted by Teacher (Hidden & Locked for Teachers)',
     present: 'Present',
     absent: 'Absent',
     late: 'Late',
@@ -713,6 +726,19 @@ export const translations = {
     markAllPresent: 'Dhammaan Jooga',
     saveAttendance: 'Keydi Xaadirinta',
     attendanceSaved: 'Xaadirinta si guul leh ayaa loo keydiyay.',
+    confirmAttendanceTitle: 'Ma hubtaa xaadirinta?',
+    confirmAttendanceMessage:
+      'Ma hubtaa inaad keydiso xaadirintan? Haddii aad "Haa" dhahdo, xogtan waa la xiri doonaa waana lagaa qarin doonaa, mana awoodi doontid inaad mar kale aragto ama wax ka beddesho.',
+    yesSaveAttendance: 'Haa, Keydi oo Xir',
+    attendanceSavedLocked:
+      'Xaadirinta waa la keydiyay waana la xiray. Xogta hadda waa lagaa qariyay, waxaana arki kara Maamulka Dugsiga oo keliya.',
+    attendanceLockedTitle: 'Xaadirinta Waa La Keydiyay Waana La Xiray',
+    attendanceLockedDesc:
+      'Xaadirinta fasalkan iyo taariikhdan horay ayaa loo keydiyay. Xogta waa lagaa qariyay mana laga beddeli karo ama mar kale looma arki karo macallinka.',
+    attendanceReportHiddenNote:
+      'Xaadirinnada la keydiyay waa la xiray waana laga qariyay macallimiinta. Maamulka Dugsiga oo keliya ayaa arki kara xogta buuxda.',
+    unlockForTeacher: 'U Fur Macallinka',
+    lockedForTeacherBadge: 'Macallin baa keydiyay (Macallinka kama arki karo)',
     present: 'Jooga',
     absent: 'Maqan',
     late: 'Daahay',

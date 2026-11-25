@@ -13,6 +13,8 @@ export interface IAttendance extends Document {
   date: string;
   records: IAttendanceRecord[];
   recordedBy: mongoose.Types.ObjectId;
+  lockedForTeacher?: boolean;
+  submittedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,6 +34,8 @@ const AttendanceSchema = new Schema<IAttendance>(
     date: { type: String, required: true, trim: true },
     records: { type: [AttendanceRecordSchema], default: [] },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    lockedForTeacher: { type: Boolean, default: false },
+    submittedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

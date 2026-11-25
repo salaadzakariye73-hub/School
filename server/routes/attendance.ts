@@ -16,6 +16,17 @@ router.use(requireDb, authenticateJWT, requireRoles('admin', 'teacher'));
 
 const VALID_STATUSES: AttendanceStatus[] = ['Present', 'Absent', 'Late', 'Excused'];
 
+export function isAttendanceLockedForTeacher(
+  doc: { lockedForTeacher?: boolean; recordedBy?: unknown } | null | undefined,
+  teacherUserId?: string
+): boolean {
+  if (!doc) return false;
+  if (doc.lockedForTeacher === true) return true;
+  if (doc.lockedForTeacher === false) return false;
+  if (teacherUserId && String(doc.recordedBy || '') === String(teacherUserId)) return true;
+  return false;
+}
+
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const classId = asString(req.query?.classId);
@@ -34,12 +45,30 @@ router.get('/', async (req: AuthRequest, res) => {
       }
     }
 
+    const doc = await Attendance.findOne({ classId, date }).lean();
+
+    if (
+      req.user?.role === 'teacher' &&
+      doc &&
+      isAttendanceLockedForTeacher(doc, String(req.user._id))
+    ) {
+      res.json({
+        classId,
+        date,
+        alreadySaved: true,
+        locked: true,
+        lockedForTeacher: true,
+        submittedAt: doc.submittedAt || doc.updatedAt || null,
+        records: [],
+      });
+      return;
+    }
+
     const students = await Student.find({ classId, status: 'Active' })
       .select('studentId fullName gender')
       .sort({ fullName: 1 })
       .lean();
 
-    const doc = await Attendance.findOne({ classId, date }).lean();
     const recordMap = new Map<string, { status: AttendanceStatus; note: string }>();
     if (doc) {
       for (const r of doc.records) {
@@ -62,6 +91,9 @@ router.get('/', async (req: AuthRequest, res) => {
       classId,
       date,
       alreadySaved: Boolean(doc),
+      locked: false,
+      lockedForTeacher: Boolean(doc?.lockedForTeacher),
+      submittedAt: doc?.submittedAt || null,
       records: rows,
     });
   } catch (err: unknown) {
@@ -81,8 +113,9 @@ router.put('/', async (req: AuthRequest, res) => {
       return;
     }
 
-    if (req.user?.role === 'teacher') {
-      const assignedIds = await getTeacherAssignedClassIds(req.user);
+    const isTeacher = req.user?.role === 'teacher';
+    if (isTeacher) {
+      const assignedIds = await getTeacherAssignedClassIds(req.user!);
       if (!assignedIds.includes(classId)) {
         res.status(403).json({ error: 'You are not assigned to this class.' });
         return;
@@ -92,6 +125,15 @@ router.put('/', async (req: AuthRequest, res) => {
     const classroom = await Classroom.findById(classId);
     if (!classroom) {
       res.status(404).json({ error: 'Class not found.' });
+      return;
+    }
+
+    const existing = await Attendance.findOne({ classId, date }).lean();
+    if (isTeacher && existing && isAttendanceLockedForTeacher(existing, String(req.user?._id))) {
+      res.status(403).json({
+        error:
+          'Attendance for this class and date has already been submitted and is locked. Contact the School Admin for changes.',
+      });
       return;
     }
 
@@ -105,6 +147,9 @@ router.put('/', async (req: AuthRequest, res) => {
       }
     }
 
+    const nextLocked = isTeacher ? true : Boolean(existing?.lockedForTeacher);
+    const nextSubmittedAt = isTeacher ? new Date() : existing?.submittedAt || null;
+
     const saved = await Attendance.findOneAndUpdate(
       { classId, date },
       {
@@ -112,13 +157,54 @@ router.put('/', async (req: AuthRequest, res) => {
         date,
         records: cleanedRecords,
         recordedBy: req.user?._id,
+        lockedForTeacher: nextLocked,
+        submittedAt: nextSubmittedAt,
       },
       { upsert: true, new: true, runValidators: true }
     );
 
+    if (isTeacher) {
+      res.json({
+        classId,
+        date,
+        alreadySaved: true,
+        locked: true,
+        lockedForTeacher: true,
+        submittedAt: saved.submittedAt || new Date(),
+      });
+      return;
+    }
+
     res.json(saved);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to save attendance.';
+    res.status(500).json({ error: message });
+  }
+});
+
+router.patch('/unlock', requireRoles('admin'), async (req: AuthRequest, res) => {
+  try {
+    const classId = asString(req.body?.classId);
+    const date = asString(req.body?.date);
+
+    if (!isValidObjectId(classId) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      res.status(400).json({ error: 'Valid classId and date (YYYY-MM-DD) are required.' });
+      return;
+    }
+
+    const updated = await Attendance.findOneAndUpdate(
+      { classId, date },
+      { lockedForTeacher: false },
+      { new: true }
+    );
+    if (!updated) {
+      res.status(404).json({ error: 'Attendance record not found.' });
+      return;
+    }
+
+    res.json({ ok: true, lockedForTeacher: false });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to unlock attendance.';
     res.status(500).json({ error: message });
   }
 });
@@ -161,10 +247,22 @@ router.get('/report', async (req: AuthRequest, res) => {
       filter.date = { $regex: `^${month}` };
     }
 
-    const attendanceDocs = await Attendance.find(filter)
+    const rawAttendanceDocs = await Attendance.find(filter)
       .populate('classId', 'name')
       .sort({ date: -1 })
       .lean();
+
+    let hiddenLockedSessions = 0;
+    const attendanceDocs =
+      req.user?.role === 'teacher'
+        ? rawAttendanceDocs.filter((doc) => {
+            if (isAttendanceLockedForTeacher(doc, String(req.user?._id))) {
+              hiddenLockedSessions += 1;
+              return false;
+            }
+            return true;
+          })
+        : rawAttendanceDocs;
 
     const studentFilter: Record<string, unknown> = {};
     if (filter.classId) {
@@ -237,6 +335,7 @@ router.get('/report', async (req: AuthRequest, res) => {
       mode,
       period: mode === 'daily' ? date : month,
       sessionsCount: attendanceDocs.length,
+      hiddenLockedSessions,
       summary: {
         Present: totalPresent,
         Absent: totalAbsent,
