@@ -5,8 +5,7 @@ export type SchoolDay =
   | 'Sunday'
   | 'Monday'
   | 'Tuesday'
-  | 'Wednesday'
-  | 'Thursday';
+  | 'Wednesday';
 
 export interface ITimetable extends Document {
   classId: mongoose.Types.ObjectId;
@@ -26,7 +25,7 @@ const TimetableSchema = new Schema<ITimetable>(
     classId: { type: Schema.Types.ObjectId, ref: 'Classroom', required: true },
     dayOfWeek: {
       type: String,
-      enum: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+      enum: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday'],
       required: true,
     },
     periodNumber: { type: Number, required: true, min: 1, max: 10 },

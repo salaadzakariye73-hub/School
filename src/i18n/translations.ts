@@ -347,6 +347,16 @@ export const translations = {
     totalMarksCol: 'Total Marks',
     resultsImportCompleteMsg: 'Valid examination results have been imported and linked to report cards.',
     noScheduledExamWarning: 'No subjects scheduled in the Examination Timetable for this exam and class yet.',
+    bulkExamTimetableImportTitle: 'Bulk Examination Timetable Import (Excel / CSV)',
+    bulkExamTimetableImportSubtitle: 'Download the template, upload exam schedule rows, check for date/room/invigilator conflicts, and import.',
+    examTimetableTemplateDesc: 'Use our formatted Excel template with all 9 examination timetable columns (day of week and duration are auto-calculated).',
+    importAllExamSchedules: 'Import All Exam Schedules',
+    importingExamSchedulesProgress: 'Saving examination timetable schedules to the database...',
+    noValidExamSchedulesToImport: 'There are no valid examination schedule rows ready to import. Please fix any invalid or conflicting rows first.',
+    examTimetableImportCompleteTitle: 'Examination Timetable Import Complete',
+    examTimetableImportCompleteMessage: 'Valid examination timetable schedules have been saved.',
+    fallbackExamLabel: 'Default Examination (if column is blank)',
+    optionalAutoMatchExam: '-- Match from Excel column --',
 
     // Fees & Expenses
     feesTitle: 'School Fees, Payments & Expenses',
@@ -399,6 +409,14 @@ export const translations = {
     dayWednesday: 'Wednesday',
     dayThursday: 'Thursday',
     printTimetable: 'Print Timetable',
+    bulkTimetableImportTitle: 'Bulk Weekly Timetable Import (Excel / CSV)',
+    bulkTimetableImportSubtitle: 'Download the template, upload weekly periods (5 days: Saturday to Wednesday), check for duplicates, and import.',
+    timetableTemplateDesc: 'Use our formatted Excel template with 8 columns for the 5 school days (Saturday to Wednesday, excluding Thursday).',
+    importAllTimetableSlots: 'Import All Periods',
+    importingTimetableProgress: 'Saving weekly timetable periods to the database...',
+    noValidTimetableToImport: 'There are no valid timetable periods ready to import. Please fix any invalid rows first.',
+    timetableImportCompleteTitle: 'Weekly Timetable Import Complete',
+    timetableImportCompleteMessage: 'Valid weekly timetable periods have been saved.',
 
     // Homework
     homeworkTitle: 'Class Homework',
@@ -855,6 +873,16 @@ export const translations = {
     totalMarksCol: 'Wadarta Dhibcaha',
     resultsImportCompleteMsg: 'Natiijooyinka saxda ah si guul leh ayaa loo keydiyay waxayna ka muuqanayaan kaararka natiijada.',
     noScheduledExamWarning: 'Weli wax maaddo ah looma jadwalka-garaynin imtixaankan iyo fasalkan.',
+    bulkExamTimetableImportTitle: 'Soo Gelinta Jadwalka Imtixaanaadka (Excel / CSV)',
+    bulkExamTimetableImportSubtitle: 'Soo deji qaabka Excel, soo geli jadwalka imtixaanka, hubi isku-dhaca waqtiga, qolka, iyo waardiyaha, ka dibna keydi.',
+    examTimetableTemplateDesc: 'Isticmaal qaabkeenna rasmiga ah ee Excel oo leh 9-ka tiir ee jadwalka imtixaanka (maalinta iyo muddada si otomaatig ah ayaa loo xisaabiyaa).',
+    importAllExamSchedules: 'Soo Geli Dhammaan Jadwalka Imtixaanka',
+    importingExamSchedulesProgress: 'Jadwalka imtixaanka waxaa lagu keydinayaa xog-kaydiyaha...',
+    noValidExamSchedulesToImport: 'Ma jiraan jadwal imtixaan oo sax ah oo diyaar u ah soo gelinta. Fadlan marka hore sax safafka khaldan.',
+    examTimetableImportCompleteTitle: 'Soo Gelinta Jadwalka Imtixaanka Waa Dhammaystirmay',
+    examTimetableImportCompleteMessage: 'Jadwalka imtixaanaadka saxda ah si guul leh ayaa loo keydiyay.',
+    fallbackExamLabel: 'Imtixaanka Caadiga ah (haddii tiirku bannaan yahay)',
+    optionalAutoMatchExam: '-- Ka akhri tiirka Excel --',
 
     // Fees & Expenses
     feesTitle: 'Lacagaha Dugsiga, Bixinta & Kharashaadka',
@@ -907,6 +935,14 @@ export const translations = {
     dayWednesday: 'Arbaco',
     dayThursday: 'Khamiis',
     printTimetable: 'Daabac Jadwalka',
+    bulkTimetableImportTitle: 'Soo Gelinta Jadwalka Fasalada (Excel / CSV)',
+    bulkTimetableImportSubtitle: 'Soo deji qaabka Excel, soo geli xilliyada todobaadka (5 maalmood: Sabti ilaa Arbaco), hubi khaladaadka, ka dibna keydi.',
+    timetableTemplateDesc: 'Isticmaal qaabkeenna rasmiga ah ee Excel oo leh 8-da tiir ee 5-ta maalmood ee dugsiga (Sabti ilaa Arbaco, Khamiista kuma jirto).',
+    importAllTimetableSlots: 'Soo Geli Dhammaan Xilliyada',
+    importingTimetableProgress: 'Xilliyada jadwalka waxaa lagu keydinayaa xog-kaydiyaha...',
+    noValidTimetableToImport: 'Ma jiraan xilliyo sax ah oo diyaar u ah soo gelinta. Fadlan marka hore sax safafka khaldan.',
+    timetableImportCompleteTitle: 'Soo Gelinta Jadwalka Waa Dhammaystirmay',
+    timetableImportCompleteMessage: 'Xilliyada jadwalka todobaadlaha ee saxda ah si guul leh ayaa loo keydiyay.',
 
     // Homework
     homeworkTitle: 'Shaqo Guriga Fasalada',

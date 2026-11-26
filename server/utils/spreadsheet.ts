@@ -112,6 +112,11 @@ function excelSerialToYmd(serial: number, date1904 = false): string {
 function extractExcelCellText(value: ExcelJS.CellValue): string {
   if (value === null || value === undefined) return '';
   if (value instanceof Date) {
+    if (value.getUTCFullYear() <= 1904) {
+      const hh = String(value.getUTCHours()).padStart(2, '0');
+      const mm = String(value.getUTCMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
     return formatDateYmd(value);
   }
   if (typeof value === 'string') return value.trim();
@@ -811,6 +816,47 @@ export function normalizeDateCell(raw: string): string {
   const parsed = new Date(s);
   if (!Number.isNaN(parsed.getTime())) {
     return formatDateYmd(parsed);
+  }
+
+  return s;
+}
+
+export function normalizeTimeCell(raw: string): string {
+  const s = raw.trim();
+  if (!s) return '';
+
+  // Excel fractional day (e.g. 0.333333 -> 08:00)
+  if (/^0?\.\d+$/.test(s)) {
+    const frac = Number(s);
+    if (Number.isFinite(frac) && frac >= 0 && frac < 1) {
+      const totalMins = Math.round(frac * 24 * 60) % (24 * 60);
+      const hh = String(Math.floor(totalMins / 60)).padStart(2, '0');
+      const mm = String(totalMins % 60).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+  }
+
+  // 12-hour format e.g. 8:30 AM or 02:15 PM
+  const ampm = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$/i);
+  if (ampm) {
+    let h = Number(ampm[1]);
+    const m = Number(ampm[2]);
+    const suffix = ampm[3].toUpperCase();
+    if (h >= 1 && h <= 12 && m >= 0 && m <= 59) {
+      if (suffix === 'PM' && h < 12) h += 12;
+      if (suffix === 'AM' && h === 12) h = 0;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+  }
+
+  // 24-hour format H:MM or HH:MM or HH:MM:SS
+  const hm = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (hm) {
+    const h = Number(hm[1]);
+    const m = Number(hm[2]);
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
   }
 
   return s;

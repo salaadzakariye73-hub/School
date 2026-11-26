@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Printer, Trash2 } from 'lucide-react';
+import { Plus, Printer, Trash2, FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { apiRequest } from '../utils/api';
 import { Modal } from '../components/ui/Modal';
 import { SchoolCrest } from '../components/ui/SchoolCrest';
+import { BulkTimetableImportModal } from '../components/timetable/BulkTimetableImportModal';
 import type { Classroom, SchoolDay, Teacher, TimetableSlot } from '../types';
 
-const DAYS: SchoolDay[] = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+const DAYS: SchoolDay[] = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday'];
 
 export function TimetablePage() {
   const { user, settings } = useAuth();
@@ -23,6 +24,7 @@ export function TimetablePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     classId: '',
@@ -67,8 +69,7 @@ export function TimetablePage() {
     if (d === 'Sunday') return tr('daySunday');
     if (d === 'Monday') return tr('dayMonday');
     if (d === 'Tuesday') return tr('dayTuesday');
-    if (d === 'Wednesday') return tr('dayWednesday');
-    return tr('dayThursday');
+    return tr('dayWednesday');
   };
 
   const openPeriodModal = (day?: SchoolDay, period?: number, existing?: TimetableSlot) => {
@@ -148,7 +149,7 @@ export function TimetablePage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => window.print()}
@@ -158,15 +159,26 @@ export function TimetablePage() {
             <span>{tr('printTimetable')}</span>
           </button>
           {isAdmin && (
-            <button
-              type="button"
-              onClick={() => openPeriodModal()}
-              disabled={classes.length === 0}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-sm font-medium disabled:opacity-60 whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{tr('addPeriod')}</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                disabled={classes.length === 0}
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium transition-colors disabled:opacity-60 whitespace-nowrap shrink-0"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-[#0F294A] dark:text-blue-400" />
+                <span>{tr('excelImport')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openPeriodModal()}
+                disabled={classes.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-sm font-medium disabled:opacity-60 whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{tr('addPeriod')}</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -439,6 +451,16 @@ export function TimetablePage() {
           </div>
         </form>
       </Modal>
+
+      {isAdmin && (
+        <BulkTimetableImportModal
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          onImported={loadData}
+          classes={classes}
+          teachers={teachers}
+        />
+      )}
     </div>
   );
 }

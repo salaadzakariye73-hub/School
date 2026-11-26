@@ -4,6 +4,7 @@ import {
   CalendarClock,
   CheckCircle2,
   Download,
+  FileSpreadsheet,
   Pencil,
   Plus,
   Printer,
@@ -17,6 +18,7 @@ import { downloadExamTimetablePdf } from '../../utils/pdfExport';
 import { Modal } from '../ui/Modal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { SchoolCrest } from '../ui/SchoolCrest';
+import { BulkExamTimetableImportModal } from './BulkExamTimetableImportModal';
 import type {
   AcademicYearItem,
   Classroom,
@@ -105,6 +107,7 @@ export function ExamTimetableManager({ classes, onExamsUpdated }: ExamTimetableM
   const [examFormError, setExamFormError] = useState<string | null>(null);
   const [deleteExamTarget, setDeleteExamTarget] = useState<Examination | null>(null);
   const [deletingExam, setDeletingExam] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [examForm, setExamForm] = useState({
     name: '',
@@ -577,14 +580,25 @@ export function ExamTimetableManager({ classes, onExamsUpdated }: ExamTimetableM
           </div>
 
           {isAdmin && (
-            <button
-              type="button"
-              onClick={openCreateExamModal}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium transition-colors whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{tr('createNewExamination')}</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium transition-colors whitespace-nowrap shrink-0"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-[#0F294A] dark:text-blue-400" />
+                <span>{tr('excelImport')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openCreateExamModal}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium transition-colors whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{tr('createNewExamination')}</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -1379,6 +1393,20 @@ export function ExamTimetableManager({ classes, onExamsUpdated }: ExamTimetableM
         onConfirm={() => void handleDeleteExam()}
         loading={deletingExam}
       />
+
+      {isAdmin && (
+        <BulkExamTimetableImportModal
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          onImported={async () => {
+            await loadAll();
+            if (onExamsUpdated) await onExamsUpdated();
+          }}
+          examinations={examinations}
+          classes={classes}
+          teachers={teachers}
+        />
+      )}
     </div>
   );
 }

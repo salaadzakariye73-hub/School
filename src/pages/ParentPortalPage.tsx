@@ -25,7 +25,7 @@ export type ParentPortalSection =
   | 'childResults'
   | 'childFees';
 
-const DAYS: SchoolDay[] = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+const DAYS: SchoolDay[] = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday'];
 
 export function ParentPortalPage({ section }: { section: ParentPortalSection }) {
   const { lang, tr } = useTheme();
@@ -65,8 +65,7 @@ export function ParentPortalPage({ section }: { section: ParentPortalSection }) 
     if (d === 'Sunday') return tr('daySunday');
     if (d === 'Monday') return tr('dayMonday');
     if (d === 'Tuesday') return tr('dayTuesday');
-    if (d === 'Wednesday') return tr('dayWednesday');
-    return tr('dayThursday');
+    return tr('dayWednesday');
   };
 
   if (loading) {

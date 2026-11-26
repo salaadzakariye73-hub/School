@@ -20,13 +20,14 @@ const VALID_DAYS: SchoolDay[] = [
   'Monday',
   'Tuesday',
   'Wednesday',
-  'Thursday',
 ];
 
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const classId = asString(req.query?.classId);
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      dayOfWeek: { $in: VALID_DAYS },
+    };
 
     if (req.user?.role === 'student') {
       const stu = req.user.studentRef

@@ -5,7 +5,7 @@ export type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Excused';
 export type PaymentMethod = 'Cash' | 'EVC Plus' | 'Zaad' | 'Sahal' | 'Bank Transfer';
 export type AnnouncementTarget = 'all' | 'student' | 'teacher' | 'parent' | 'accountant' | 'class';
 export type AnnouncementCategory = 'Notice' | 'Holiday' | 'Exam' | 'Update';
-export type SchoolDay = 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday';
+export type SchoolDay = 'Saturday' | 'Sunday' | 'Monday' | 'Tuesday' | 'Wednesday';
 export type HomeworkStatus = 'Assigned' | 'Completed' | 'Reviewed';
 export type ExpenseCategory = 'Salaries' | 'Utilities' | 'Supplies' | 'Maintenance' | 'Rent' | 'Other';
 
@@ -568,3 +568,115 @@ export interface BulkTeacherImportCommitResponse {
   failedCount: number;
   rejectedRows: BulkTeacherImportRow[];
 }
+
+export interface BulkTimetableImportRow {
+  rowNumber: number;
+  className: string;
+  dayOfWeek: string;
+  periodNumber: string;
+  startTime: string;
+  endTime: string;
+  subject: string;
+  teacher: string;
+  room: string;
+  rowStatus: BulkRowValidationStatus;
+  errors: string[];
+  warnings: string[];
+  matchedClassId: string | null;
+  matchedClassName: string;
+  normalizedDay: SchoolDay | null;
+  numericPeriod: number;
+  matchedTeacherId: string | null;
+  matchedTeacherName: string;
+}
+
+export interface BulkTimetableImportUploadResponse {
+  fileName: string;
+  headersDetected: string[];
+  rows: BulkTimetableImportRow[];
+  summary: BulkImportValidationSummary;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string }>;
+  availableTeachers: Array<{ _id: string; teacherId: string; fullName: string }>;
+}
+
+export interface BulkTimetableImportValidateResponse {
+  rows: BulkTimetableImportRow[];
+  summary: BulkImportValidationSummary;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string }>;
+  availableTeachers: Array<{ _id: string; teacherId: string; fullName: string }>;
+}
+
+export interface BulkTimetableImportCommitResponse {
+  totalProcessed: number;
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  failedCount: number;
+  rejectedRows: BulkTimetableImportRow[];
+}
+
+export interface BulkExamTimetableImportRow {
+  rowNumber: number;
+  examinationName: string;
+  className: string;
+  examDate: string;
+  subject: string;
+  startTime: string;
+  endTime: string;
+  invigilator: string;
+  room: string;
+  notes: string;
+  rowStatus: BulkRowValidationStatus;
+  errors: string[];
+  warnings: string[];
+  matchedExaminationId: string | null;
+  matchedExaminationName: string;
+  matchedClassId: string | null;
+  matchedClassName: string;
+  dayOfWeek: string;
+  durationMinutes: number;
+  matchedInvigilatorId: string | null;
+  matchedInvigilatorName: string;
+}
+
+export interface BulkExamTimetableImportUploadResponse {
+  fileName: string;
+  headersDetected: string[];
+  rows: BulkExamTimetableImportRow[];
+  summary: BulkImportValidationSummary;
+  examinations: Array<{
+    _id: string;
+    name: string;
+    academicYear: string;
+    term: string;
+    startDate: string;
+    endDate: string;
+  }>;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string; subjects: string[] }>;
+  availableTeachers: Array<{ _id: string; teacherId: string; fullName: string }>;
+}
+
+export interface BulkExamTimetableImportValidateResponse {
+  rows: BulkExamTimetableImportRow[];
+  summary: BulkImportValidationSummary;
+  examinations: Array<{
+    _id: string;
+    name: string;
+    academicYear: string;
+    term: string;
+    startDate: string;
+    endDate: string;
+  }>;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string; subjects: string[] }>;
+  availableTeachers: Array<{ _id: string; teacherId: string; fullName: string }>;
+}
+
+export interface BulkExamTimetableImportCommitResponse {
+  totalProcessed: number;
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  failedCount: number;
+  rejectedRows: BulkExamTimetableImportRow[];
+}
+
