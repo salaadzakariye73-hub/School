@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus, Pencil, Trash2, KeyRound, Power, Download, Upload, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -89,6 +89,9 @@ export function SettingsUsersPage() {
   const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
+  const updateSettingsStateRef = useRef(updateSettingsState);
+  updateSettingsStateRef.current = updateSettingsState;
+
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -105,13 +108,13 @@ export function SettingsUsersPage() {
       setStudents(studentList);
       setClasses(classList);
       setSchoolForm(latestSettings);
-      updateSettingsState(latestSettings);
+      updateSettingsStateRef.current(latestSettings);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load settings.');
     } finally {
       setLoading(false);
     }
-  }, [updateSettingsState]);
+  }, []);
 
   useEffect(() => {
     void loadData();
