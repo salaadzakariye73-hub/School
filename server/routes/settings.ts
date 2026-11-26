@@ -8,8 +8,13 @@ const router = Router();
 router.use(requireDb, authenticateJWT);
 
 router.get('/', async (_req, res) => {
-  const settings = await getOrCreateSettings();
-  res.json(settings);
+  try {
+    const settings = await getOrCreateSettings();
+    res.json(settings);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to load school settings.';
+    res.status(500).json({ error: message });
+  }
 });
 
 router.put('/', requireRoles('admin'), async (req, res) => {

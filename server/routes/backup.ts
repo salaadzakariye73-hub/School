@@ -5,6 +5,8 @@ import { Classroom } from '../models/Classroom.js';
 import { Teacher } from '../models/Teacher.js';
 import { Student } from '../models/Student.js';
 import { Attendance } from '../models/Attendance.js';
+import { Examination } from '../models/Examination.js';
+import { ExamSchedule } from '../models/ExamSchedule.js';
 import { ExamResult } from '../models/ExamResult.js';
 import { FeePayment } from '../models/FeePayment.js';
 import { Expense } from '../models/Expense.js';
@@ -26,6 +28,8 @@ router.get('/export', async (_req, res) => {
       teachers,
       students,
       attendance,
+      examinations,
+      examSchedules,
       examResults,
       feePayments,
       expenses,
@@ -39,6 +43,8 @@ router.get('/export', async (_req, res) => {
       Teacher.find().lean(),
       Student.find().lean(),
       Attendance.find().lean(),
+      Examination.find().lean(),
+      ExamSchedule.find().lean(),
       ExamResult.find().lean(),
       FeePayment.find().lean(),
       Expense.find().lean(),
@@ -48,7 +54,7 @@ router.get('/export', async (_req, res) => {
     ]);
 
     res.json({
-      backupVersion: 1,
+      backupVersion: 2,
       exportedAt: new Date().toISOString(),
       collections: {
         settings,
@@ -57,6 +63,8 @@ router.get('/export', async (_req, res) => {
         teachers,
         students,
         attendance,
+        examinations,
+        examSchedules,
         examResults,
         feePayments,
         expenses,
@@ -103,6 +111,8 @@ router.post('/restore', async (req, res) => {
       Teacher.deleteMany({}),
       Student.deleteMany({}),
       Attendance.deleteMany({}),
+      Examination.deleteMany({}),
+      ExamSchedule.deleteMany({}),
       ExamResult.deleteMany({}),
       FeePayment.deleteMany({}),
       Expense.deleteMany({}),
@@ -117,6 +127,8 @@ router.post('/restore', async (req, res) => {
     if (Array.isArray(c.teachers) && c.teachers.length > 0) await Teacher.insertMany(c.teachers);
     if (Array.isArray(c.students) && c.students.length > 0) await Student.insertMany(c.students);
     if (Array.isArray(c.attendance) && c.attendance.length > 0) await Attendance.insertMany(c.attendance);
+    if (Array.isArray(c.examinations) && c.examinations.length > 0) await Examination.insertMany(c.examinations);
+    if (Array.isArray(c.examSchedules) && c.examSchedules.length > 0) await ExamSchedule.insertMany(c.examSchedules);
     if (Array.isArray(c.examResults) && c.examResults.length > 0) await ExamResult.insertMany(c.examResults);
     if (Array.isArray(c.feePayments) && c.feePayments.length > 0) await FeePayment.insertMany(c.feePayments);
     if (Array.isArray(c.expenses) && c.expenses.length > 0) await Expense.insertMany(c.expenses);
@@ -130,6 +142,7 @@ router.post('/restore', async (req, res) => {
         students: Array.isArray(c.students) ? c.students.length : 0,
         teachers: Array.isArray(c.teachers) ? c.teachers.length : 0,
         classrooms: Array.isArray(c.classrooms) ? c.classrooms.length : 0,
+        examinations: Array.isArray(c.examinations) ? c.examinations.length : 0,
       },
     });
   } catch (err: unknown) {

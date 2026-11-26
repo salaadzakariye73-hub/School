@@ -90,6 +90,30 @@ async function startServer() {
     res.status(404).json({ error: 'API endpoint not found.' });
   });
 
+  app.use(
+    (
+      err: unknown,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      if (res.headersSent) {
+        next(err);
+        return;
+      }
+      const status =
+        typeof err === 'object' && err !== null && 'status' in err && typeof (err as { status: unknown }).status === 'number'
+          ? (err as { status: number }).status
+          : 500;
+      const message = err instanceof Error ? err.message : 'Internal server error.';
+      if (req.path.startsWith('/api')) {
+        res.status(status).json({ error: message });
+        return;
+      }
+      next(err);
+    }
+  );
+
   if (!config.isProduction) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

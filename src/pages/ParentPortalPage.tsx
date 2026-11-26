@@ -7,6 +7,7 @@ import {
   Megaphone,
   Printer,
   CalendarDays,
+  CalendarClock,
   BookMarked,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -121,8 +122,17 @@ export function ParentPortalPage({ section }: { section: ParentPortalSection }) 
   }
 
   const activeChild = children.find((c) => c.student._id === selectedChildId) || children[0];
-  const { student, classroom, attendanceSummary, attendanceRecords, reportCards, feeSummary, homework, timetable } =
-    activeChild;
+  const {
+    student,
+    classroom,
+    attendanceSummary,
+    attendanceRecords,
+    reportCards,
+    feeSummary,
+    homework,
+    timetable,
+    examSchedules = [],
+  } = activeChild;
   const latestExam = reportCards[reportCards.length - 1] || null;
 
   const childSelectorBar = (
@@ -262,8 +272,9 @@ export function ParentPortalPage({ section }: { section: ParentPortalSection }) 
                         {ann.title}
                       </span>
                       {ann.category && (
-                        <span className="text-[11px] font-mono uppercase text-[#0F294A] dark:text-blue-400">
-                          [{ann.category}{ann.eventDate ? ` · ${ann.eventDate}` : ''}]
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-[#0F294A] dark:text-blue-400">
+                          {ann.category}
+                          {ann.eventDate ? ` · ${ann.eventDate}` : ''}
                         </span>
                       )}
                     </div>
@@ -559,8 +570,76 @@ export function ParentPortalPage({ section }: { section: ParentPortalSection }) 
       <div className="space-y-6">
         {childSelectorBar}
 
+        {/* Child Examination Timetable */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="w-4 h-4 text-[#0F294A] dark:text-blue-400" />
+              <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                {tr('examTimetableTitle')}
+              </h2>
+            </div>
+            {examSchedules.length > 0 && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0F294A] text-white text-xs font-medium no-print whitespace-nowrap shrink-0"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>{tr('printExamTimetableBtn')}</span>
+              </button>
+            )}
+          </div>
+
+          {examSchedules.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">{tr('noData')}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left border border-slate-200 dark:border-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">{tr('examName')}</th>
+                    <th className="px-3 py-2 font-semibold">{tr('examDateCol')}</th>
+                    <th className="px-3 py-2 font-semibold">{tr('dayOfWeek')}</th>
+                    <th className="px-3 py-2 font-semibold">{tr('subject')}</th>
+                    <th className="px-3 py-2 font-semibold">{tr('startTime')} - {tr('endTime')}</th>
+                    <th className="px-3 py-2 font-semibold">{tr('durationCol')}</th>
+                    <th className="px-3 py-2 font-semibold">{tr('examRoomCol')}</th>
+                    <th className="px-3 py-2 font-semibold">{tr('invigilatorCol')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                  {examSchedules.map((sc) => {
+                    const exName =
+                      typeof sc.examinationId === 'object' ? sc.examinationId.name : '-';
+                    const invName =
+                      typeof sc.invigilatorId === 'object' ? sc.invigilatorId.fullName : '-';
+                    const h = Math.floor(sc.durationMinutes / 60);
+                    const m = sc.durationMinutes % 60;
+                    const durLabel = h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+                    return (
+                      <tr key={sc._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="px-3 py-2 font-medium">{exName}</td>
+                        <td className="px-3 py-2 font-mono text-xs tabular-nums">{sc.examDate}</td>
+                        <td className="px-3 py-2 text-xs">{sc.dayOfWeek}</td>
+                        <td className="px-3 py-2 font-semibold">{sc.subject}</td>
+                        <td className="px-3 py-2 font-mono text-xs tabular-nums">
+                          {sc.startTime} - {sc.endTime}
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs tabular-nums">{durLabel}</td>
+                        <td className="px-3 py-2">{sc.room}</td>
+                        <td className="px-3 py-2 text-xs">{invName}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         {reportCards.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-8 text-center text-sm text-slate-500">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center text-sm text-slate-500">
             {tr('noData')}
           </div>
         ) : (

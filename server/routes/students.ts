@@ -4,8 +4,10 @@ import { Classroom } from '../models/Classroom.js';
 import { Attendance } from '../models/Attendance.js';
 import { ExamResult } from '../models/ExamResult.js';
 import { FeePayment } from '../models/FeePayment.js';
+import { User } from '../models/User.js';
 import { getOrCreateSettings } from '../models/SchoolSettings.js';
 import { requireDb } from '../db.js';
+import { isAttendanceLockedForTeacher } from './attendance.js';
 import {
   authenticateJWT,
   getTeacherAssignedClassIds,
@@ -93,6 +95,12 @@ router.get('/:id', async (req: AuthRequest, res) => {
     const attendanceDocs = await Attendance.find({ 'records.studentId': student._id }).lean();
     const attendanceSummary = { Present: 0, Absent: 0, Late: 0, Excused: 0, total: 0 };
     for (const doc of attendanceDocs) {
+      if (
+        req.user?.role === 'teacher' &&
+        isAttendanceLockedForTeacher(doc, String(req.user._id))
+      ) {
+        continue;
+      }
       const rec = doc.records.find((r) => String(r.studentId) === String(student._id));
       if (rec) {
         attendanceSummary[rec.status] += 1;
@@ -104,14 +112,15 @@ router.get('/:id', async (req: AuthRequest, res) => {
       .sort({ updatedAt: -1 })
       .lean();
     const settings = await getOrCreateSettings();
+    const sortedScale = [...settings.gradingScale].sort((a, b) => b.minPercent - a.minPercent);
 
     const examHistory = examDocs.map((doc) => {
       const entry = doc.marks.find((m) => String(m.studentId) === String(student._id));
       const score = entry ? entry.score : 0;
       const pct = doc.maxMarks > 0 ? Math.round((score / doc.maxMarks) * 1000) / 10 : 0;
       const gradeRule =
-        settings.gradingScale.find((g) => pct >= g.minPercent) ||
-        settings.gradingScale[settings.gradingScale.length - 1];
+        sortedScale.find((g) => pct >= g.minPercent) ||
+        sortedScale[sortedScale.length - 1];
       return {
         examName: doc.examName,
         subject: doc.subject,
@@ -299,6 +308,11 @@ router.delete('/:id', requireRoles('admin'), async (req, res) => {
       res.status(404).json({ error: 'Student not found.' });
       return;
     }
+
+    await Promise.all([
+      User.updateMany({ studentRef: deleted._id }, { $set: { studentRef: null, active: false } }),
+      User.updateMany({ childrenRefs: deleted._id }, { $pull: { childrenRefs: deleted._id } }),
+    ]);
 
     res.json({ message: 'Student deleted successfully.' });
   } catch (err: unknown) {

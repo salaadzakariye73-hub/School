@@ -27,12 +27,12 @@ export function ConfirmModal({
       <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
         {message || tr('confirmDeleteMessage')}
       </p>
-      <div className="mt-6 flex items-center justify-end gap-3">
+      <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
         <button
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0"
+          className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0"
         >
           {tr('cancel')}
         </button>
@@ -40,7 +40,7 @@ export function ConfirmModal({
           type="button"
           onClick={onConfirm}
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0"
+          className="px-4 py-2 text-sm font-semibold rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-60 transition-colors whitespace-nowrap shrink-0"
         >
           {loading ? tr('loading') : confirmLabel || tr('yesDelete')}
         </button>

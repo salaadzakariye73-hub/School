@@ -322,6 +322,7 @@ export interface ParentPortalChildOverview {
   feeSummary: StudentPortalOverview['feeSummary'];
   homework: HomeworkItem[];
   timetable: TimetableSlot[];
+  examSchedules?: ExamScheduleItem[];
 }
 
 export interface ParentPortalOverview {

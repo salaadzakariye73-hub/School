@@ -13,25 +13,30 @@ router.use(requireDb, authenticateJWT, requireRoles('admin'));
 const ALLOWED_ROLES: UserRole[] = ['admin', 'teacher', 'student', 'parent', 'accountant'];
 
 router.get('/', async (_req, res) => {
-  const users = await User.find()
-    .select('-passwordHash')
-    .populate({
-      path: 'teacherRef',
-      select: 'teacherId fullName assignedClasses',
-      populate: { path: 'assignedClasses', select: 'name' },
-    })
-    .populate({
-      path: 'studentRef',
-      select: 'studentId fullName classId',
-      populate: { path: 'classId', select: 'name' },
-    })
-    .populate({
-      path: 'childrenRefs',
-      select: 'studentId fullName classId',
-      populate: { path: 'classId', select: 'name' },
-    })
-    .sort({ createdAt: -1 });
-  res.json(users);
+  try {
+    const users = await User.find()
+      .select('-passwordHash')
+      .populate({
+        path: 'teacherRef',
+        select: 'teacherId fullName assignedClasses',
+        populate: { path: 'assignedClasses', select: 'name' },
+      })
+      .populate({
+        path: 'studentRef',
+        select: 'studentId fullName classId',
+        populate: { path: 'classId', select: 'name' },
+      })
+      .populate({
+        path: 'childrenRefs',
+        select: 'studentId fullName classId',
+        populate: { path: 'classId', select: 'name' },
+      })
+      .sort({ createdAt: -1 });
+    res.json(users);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to load user accounts.';
+    res.status(500).json({ error: message });
+  }
 });
 
 router.post('/', async (req, res) => {

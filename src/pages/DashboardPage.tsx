@@ -142,7 +142,7 @@ export function DashboardPage() {
         {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
           <div
             key={n}
-            className="h-28 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse p-5"
+            className="h-28 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse p-5"
           />
         ))}
       </div>
@@ -151,7 +151,7 @@ export function DashboardPage() {
 
   if (error || !stats) {
     return (
-      <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+      <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
         {error || tr('noData')}
       </div>
     );
@@ -163,6 +163,7 @@ export function DashboardPage() {
       value: stats.totalStudents.toLocaleString(),
       sub: tr('active'),
       icon: GraduationCap,
+      iconTone: 'bg-blue-50 text-[#0F294A] dark:bg-blue-950/70 dark:text-blue-300',
       visible: true,
     },
     {
@@ -170,6 +171,7 @@ export function DashboardPage() {
       value: stats.totalTeachers.toLocaleString(),
       sub: tr('active'),
       icon: Users,
+      iconTone: 'bg-slate-100 text-[#0F294A] dark:bg-slate-800 dark:text-sky-300',
       visible: user?.role === 'admin',
     },
     {
@@ -177,6 +179,7 @@ export function DashboardPage() {
       value: stats.totalClasses.toLocaleString(),
       sub: settings?.academicYear || '2026-2027',
       icon: BookOpen,
+      iconTone: 'bg-indigo-50 text-[#0F294A] dark:bg-indigo-950/60 dark:text-indigo-300',
       visible: true,
     },
     {
@@ -187,6 +190,7 @@ export function DashboardPage() {
           ? `${stats.todayPresent}/${stats.todayMarked} ${tr('studentsMarkedToday')}`
           : tr('noAttendanceToday'),
       icon: ClipboardCheck,
+      iconTone: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
       visible: user?.role !== 'accountant',
     },
     {
@@ -194,6 +198,7 @@ export function DashboardPage() {
       value: formatMoney(stats.totalFeesCollected, symbol, code),
       sub: tr('collected'),
       icon: Wallet,
+      iconTone: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
       visible: showFinancials,
     },
     {
@@ -201,6 +206,7 @@ export function DashboardPage() {
       value: formatMoney(stats.outstandingFees, symbol, code),
       sub: tr('outstanding'),
       icon: AlertCircle,
+      iconTone: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300',
       visible: showFinancials,
     },
     {
@@ -208,6 +214,7 @@ export function DashboardPage() {
       value: formatMoney(stats.totalExpenses || 0, symbol, code),
       sub: tr('expensesTab'),
       icon: TrendingDown,
+      iconTone: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300',
       visible: showFinancials,
     },
     {
@@ -215,6 +222,7 @@ export function DashboardPage() {
       value: formatMoney(stats.netBalance ?? stats.totalFeesCollected, symbol, code),
       sub: tr('collected'),
       icon: Scale,
+      iconTone: 'bg-blue-50 text-[#0F294A] dark:bg-blue-950/70 dark:text-blue-300',
       visible: showFinancials,
     },
   ].filter((c) => c.visible);
@@ -226,6 +234,19 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Executive School Context Line */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
+        <div>
+          <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {settings?.schoolName || tr('appName')}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {tr('academicYear')}: <span className="font-mono font-medium">{settings?.academicYear || '2026-2027'}</span>
+            {settings?.schoolAddress ? ` · ${settings.schoolAddress}` : ''}
+          </p>
+        </div>
+      </div>
+
       {/* KPI Cards */}
       <div
         className={`grid grid-cols-1 sm:grid-cols-2 ${
@@ -237,20 +258,22 @@ export function DashboardPage() {
           return (
             <div
               key={card.label}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex items-start justify-between gap-4"
+              className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-5 flex items-start justify-between gap-4 transition-colors"
             >
               <div className="min-w-0">
-                <div className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   {card.label}
                 </div>
-                <div className="mt-2 font-display text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+                <div className="mt-2 font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
                   {card.value}
                 </div>
                 <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
                   {card.sub}
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[#0F294A] dark:text-blue-400 shrink-0">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${card.iconTone}`}
+              >
                 <Icon className="w-5 h-5" />
               </div>
             </div>
@@ -259,72 +282,91 @@ export function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         {user?.role !== 'accountant' && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
-            <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white mb-4">
-              {tr('attendanceLast7Days')}
-            </h2>
-            <div className="h-52 flex items-end justify-between gap-2 pt-4">
-              {stats.attendanceTrend.map((day) => (
-                <div key={day.date} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                  <div className="text-xs font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                    {day.total > 0 ? `${day.rate}%` : '-'}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                {tr('attendanceLast7Days')}
+              </h2>
+              <span className="text-xs font-mono text-slate-400 dark:text-slate-500 tabular-nums">
+                0% – 100%
+              </span>
+            </div>
+
+            <div className="relative h-52 pt-4">
+              {/* Subtle reference lines */}
+              <div className="absolute inset-x-0 top-4 bottom-8 flex flex-col justify-between pointer-events-none">
+                <div className="border-b border-dashed border-slate-200/80 dark:border-slate-800" />
+                <div className="border-b border-dashed border-slate-200/80 dark:border-slate-800" />
+                <div className="border-b border-slate-200 dark:border-slate-800" />
+              </div>
+
+              <div className="relative h-full flex items-end justify-between gap-2.5">
+                {stats.attendanceTrend.map((day) => (
+                  <div
+                    key={day.date}
+                    title={`${day.date}: ${day.present}/${day.total} (${day.rate}%)`}
+                    className="flex-1 flex flex-col items-center gap-2 h-full justify-end group"
+                  >
+                    <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300">
+                      {day.total > 0 ? `${day.rate}%` : '-'}
+                    </div>
+                    <div className="w-full max-w-[34px] bg-slate-100/90 dark:bg-slate-800/80 rounded-t-lg h-32 flex items-end overflow-hidden">
+                      <div
+                        className="w-full bg-gradient-to-t from-[#0F294A] to-[#2563EB] dark:from-blue-600 dark:to-sky-400 rounded-t-lg transition-all duration-300"
+                        style={{ height: `${day.total > 0 ? Math.max(6, day.rate) : 0}%` }}
+                      />
+                    </div>
+                    <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      {day.label}
+                    </div>
                   </div>
-                  <div className="w-full max-w-[36px] bg-slate-100 dark:bg-slate-800 rounded-t-md h-32 flex items-end overflow-hidden">
-                    <div
-                      className="w-full bg-[#0F294A] dark:bg-blue-500 rounded-t-md transition-all"
-                      style={{ height: `${day.total > 0 ? Math.max(6, day.rate) : 0}%` }}
-                    />
-                  </div>
-                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    {day.label}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {showFinancials && (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 flex flex-col">
             <div className="flex items-center justify-between gap-2 mb-4">
               <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
                 {tr('feeBreakdownByClass')}
               </h2>
               <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-[#0F294A] dark:bg-blue-500 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#0F294A] dark:bg-blue-500 inline-block" />
                   {tr('collected')}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-amber-500 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
                   {tr('outstanding')}
                 </span>
               </div>
             </div>
 
             {stats.feeByClass.length === 0 ? (
-              <div className="h-52 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+              <div className="flex-1 min-h-48 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
                 {tr('noData')}
               </div>
             ) : (
-              <div className="space-y-3 max-h-52 overflow-y-auto pr-1">
+              <div className="space-y-3.5 max-h-52 overflow-y-auto pr-1">
                 {stats.feeByClass.map((row) => {
                   const collectedPct = Math.round((row.collected / maxFeeValue) * 100);
                   const outstandingPct = Math.round((row.outstanding / maxFeeValue) * 100);
                   return (
-                    <div key={row.className} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                    <div key={row.className} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs gap-2">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">
                           {row.className}
                         </span>
-                        <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
+                        <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400 shrink-0">
                           {formatMoney(row.collected, symbol, code)} /{' '}
                           {formatMoney(row.collected + row.outstanding, symbol, code)}
                         </span>
                       </div>
-                      <div className="w-full h-3 rounded-md bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
+                      <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
                         <div
                           className="h-full bg-[#0F294A] dark:bg-blue-500"
                           style={{ width: `${collectedPct}%` }}
@@ -344,10 +386,12 @@ export function DashboardPage() {
       </div>
 
       {/* School Announcements */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5">
         <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Megaphone className="w-4 h-4 text-[#0F294A] dark:text-blue-400" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[#0F294A] dark:text-blue-400">
+              <Megaphone className="w-4 h-4" />
+            </div>
             <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
               {tr('announcementsTitle')}
             </h2>
@@ -366,7 +410,7 @@ export function DashboardPage() {
                 });
                 setAnnOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-xs font-medium whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-semibold whitespace-nowrap shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>{tr('addAnnouncement')}</span>
@@ -377,20 +421,20 @@ export function DashboardPage() {
         {announcements.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">{tr('noAnnouncements')}</p>
         ) : (
-          <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          <div className="divide-y divide-slate-200/80 dark:divide-slate-800">
             {announcements.map((ann) => (
-              <div key={ann._id} className="py-3 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
+              <div key={ann._id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-4">
                 <div className="space-y-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-sm text-slate-900 dark:text-white">
                       {ann.title}
                     </span>
-                    <span className="text-[11px] font-mono uppercase tracking-wide text-[#0F294A] dark:text-blue-400">
-                      [{categoryLabel(ann.category)}
-                      {ann.eventDate ? ` · ${ann.eventDate}` : ''}]
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-[#0F294A] dark:text-blue-400">
+                      {categoryLabel(ann.category)}
+                      {ann.eventDate ? ` · ${ann.eventDate}` : ''}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed">
                     {ann.content}
                   </p>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -401,7 +445,7 @@ export function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => void handleDeleteAnnouncement(ann._id)}
-                    className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 shrink-0"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 shrink-0"
                     title={tr('delete')}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -429,7 +473,7 @@ export function DashboardPage() {
               required
               value={annForm.title}
               onChange={(e) => setAnnForm({ ...annForm, title: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
             />
           </div>
 
@@ -443,7 +487,7 @@ export function DashboardPage() {
                 onChange={(e) =>
                   setAnnForm({ ...annForm, category: e.target.value as AnnouncementCategory })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
               >
                 <option value="Notice">{tr('catNotice')}</option>
                 <option value="Holiday">{tr('catHoliday')}</option>
@@ -460,7 +504,7 @@ export function DashboardPage() {
                 type="date"
                 value={annForm.eventDate}
                 onChange={(e) => setAnnForm({ ...annForm, eventDate: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
               />
             </div>
           </div>
@@ -475,7 +519,7 @@ export function DashboardPage() {
                 onChange={(e) =>
                   setAnnForm({ ...annForm, targetRole: e.target.value as AnnouncementTarget })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
               >
                 <option value="all">{tr('allUsers')}</option>
                 <option value="student">{tr('studentsOnly')}</option>
@@ -495,7 +539,7 @@ export function DashboardPage() {
                   required
                   value={annForm.targetClassId}
                   onChange={(e) => setAnnForm({ ...annForm, targetClassId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
                 >
                   <option value="">-- {tr('selectClass')} --</option>
                   {classes.map((cls) => (
@@ -517,22 +561,22 @@ export function DashboardPage() {
               required
               value={annForm.content}
               onChange={(e) => setAnnForm({ ...annForm, content: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setAnnOpen(false)}
-              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-medium"
+              className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium"
             >
               {tr('cancel')}
             </button>
             <button
               type="submit"
               disabled={postingAnn}
-              className="px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-sm font-medium disabled:opacity-60"
+              className="px-4 py-2 rounded-xl bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-sm font-semibold disabled:opacity-60"
             >
               {postingAnn ? tr('loading') : tr('postAnnouncement')}
             </button>

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Teacher } from '../models/Teacher.js';
 import { Classroom } from '../models/Classroom.js';
+import { User } from '../models/User.js';
 import { requireDb } from '../db.js';
 import { authenticateJWT, requireRoles } from '../middleware/auth.js';
 import { asString, asStringArray, isValidObjectId } from '../utils/sanitize.js';
@@ -129,7 +130,10 @@ router.delete('/:id', requireRoles('admin'), async (req, res) => {
       return;
     }
 
-    await Classroom.updateMany({ classTeacherId: deleted._id }, { $set: { classTeacherId: null } });
+    await Promise.all([
+      Classroom.updateMany({ classTeacherId: deleted._id }, { $set: { classTeacherId: null } }),
+      User.updateMany({ teacherRef: deleted._id }, { $set: { teacherRef: null } }),
+    ]);
     res.json({ message: 'Teacher removed successfully.' });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to remove teacher.';

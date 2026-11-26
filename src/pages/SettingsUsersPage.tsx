@@ -471,14 +471,14 @@ export function SettingsUsersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="inline-flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800">
         <button
           type="button"
           onClick={() => setTab('users')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             tab === 'users'
-              ? 'bg-[#0F294A] text-white dark:bg-blue-600'
-              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+              ? 'bg-[#0F294A] text-white dark:bg-blue-600 shadow-xs'
+              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           {tr('usersTab')}
@@ -486,10 +486,10 @@ export function SettingsUsersPage() {
         <button
           type="button"
           onClick={() => setTab('school')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             tab === 'school'
-              ? 'bg-[#0F294A] text-white dark:bg-blue-600'
-              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+              ? 'bg-[#0F294A] text-white dark:bg-blue-600 shadow-xs'
+              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           {tr('schoolSettingsTab')}
@@ -497,10 +497,10 @@ export function SettingsUsersPage() {
         <button
           type="button"
           onClick={() => setTab('backup')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+          className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
             tab === 'backup'
-              ? 'bg-[#0F294A] text-white dark:bg-blue-600'
-              : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+              ? 'bg-[#0F294A] text-white dark:bg-blue-600 shadow-xs'
+              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           {tr('backupRestoreTab')}
@@ -508,13 +508,13 @@ export function SettingsUsersPage() {
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
           {error}
         </div>
       )}
 
       {message && (
-        <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300">
+        <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300">
           {message}
         </div>
       )}
@@ -526,7 +526,7 @@ export function SettingsUsersPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm"
               >
                 <option value="">{tr('all')} ({users.length})</option>
                 <option value="admin">{tr('roleAdmin')}</option>
@@ -539,24 +539,24 @@ export function SettingsUsersPage() {
             <button
               type="button"
               onClick={openAddUser}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 text-white text-sm font-medium whitespace-nowrap"
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-semibold whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
               <span>{tr('addUser')}</span>
             </button>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">{tr('fullName')}</th>
-                    <th className="px-4 py-3 font-semibold">{tr('username')} / {tr('email')}</th>
-                    <th className="px-4 py-3 font-semibold">{tr('role')}</th>
-                    <th className="px-4 py-3 font-semibold">{tr('classLabel')} / {tr('linkedChildren')}</th>
-                    <th className="px-4 py-3 font-semibold">{tr('accountStatus')}</th>
-                    <th className="px-4 py-3 font-semibold text-right">{tr('actions')}</th>
+                    <th className="px-4 py-3 font-semibold whitespace-nowrap">{tr('fullName')}</th>
+                    <th className="px-4 py-3 font-semibold whitespace-nowrap">{tr('username')} / {tr('email')}</th>
+                    <th className="px-4 py-3 font-semibold whitespace-nowrap">{tr('role')}</th>
+                    <th className="px-4 py-3 font-semibold whitespace-nowrap">{tr('classLabel')} / {tr('linkedChildren')}</th>
+                    <th className="px-4 py-3 font-semibold whitespace-nowrap">{tr('accountStatus')}</th>
+                    <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">{tr('actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
