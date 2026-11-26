@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileSpreadsheet } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { apiRequest } from '../utils/api';
 import { resizeImageFileToDataUrl } from '../utils/image';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { BulkTeacherImportModal } from '../components/teachers/BulkTeacherImportModal';
 import type { Classroom, Teacher } from '../types';
 
 export function TeachersPage() {
@@ -21,6 +22,7 @@ export function TeachersPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [form, setForm] = useState({
     teacherId: '',
@@ -163,18 +165,29 @@ export function TeachersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {tr('teachersTitle')} ({teachers.length})
         </p>
-        <button
-          type="button"
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium transition-colors whitespace-nowrap shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{tr('addTeacher')}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm font-medium transition-colors whitespace-nowrap shrink-0"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-[#0F294A] dark:text-blue-400" />
+            <span>{tr('excelImport')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openAdd}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0F294A] hover:bg-[#173966] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-medium transition-colors whitespace-nowrap shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{tr('addTeacher')}</span>
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -420,6 +433,13 @@ export function TeachersPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void handleDelete()}
         loading={deleting}
+      />
+
+      <BulkTeacherImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={loadData}
+        classes={classes}
       />
     </div>
   );

@@ -213,6 +213,15 @@ export const translations = {
     assignedSubjects: 'Assigned Subjects',
     assignedClasses: 'Assigned Classes',
     subjectsCommaHint: 'Comma-separated (e.g. Mathematics, Somali, English)',
+    bulkTeacherImportTitle: 'Bulk Teacher Import (Excel / CSV)',
+    bulkTeacherImportSubtitle: 'Download the template, upload your teacher spreadsheet, review & fix validation issues, then import valid teachers.',
+    teacherTemplateDesc: 'Use our official Excel template with all 7 teacher columns and sample Somali teacher records.',
+    importAllTeachers: 'Import All Teachers',
+    importingTeachersProgress: 'Importing teachers into database...',
+    noValidTeachersToImport: 'There are no valid teacher records ready to import. Please fix invalid rows first.',
+    teacherImportCompleteTitle: 'Bulk Teacher Import Completed',
+    teacherImportCompleteMessage: 'Valid teacher records have been saved to the school database.',
+    autoGenTeacherIdToggle: 'Auto-generate Teacher IDs if blank (TCH-001)',
 
     // Classes
     classesTitle: 'Classes & Subjects',
@@ -224,6 +233,14 @@ export const translations = {
     studentCount: 'Students',
     subjects: 'Subjects',
     tuitionFee: 'Class Fee',
+    bulkClassImportTitle: 'Bulk Class & Subjects Import (Excel / CSV)',
+    bulkClassImportSubtitle: 'Download the template, upload your classes spreadsheet, review & fix validation issues, then import valid classes.',
+    classTemplateDesc: 'Use our official Excel template with all 5 columns (Class Name, Academic Year, Class Teacher, Subjects, Tuition Fee).',
+    importAllClasses: 'Import All Classes',
+    importingClassesProgress: 'Importing classes into database...',
+    noValidClassesToImport: 'There are no valid class records ready to import. Please fix invalid rows first.',
+    classImportCompleteTitle: 'Bulk Class Import Completed',
+    classImportCompleteMessage: 'Valid class and subject records have been saved to the school database.',
 
     // Attendance
     attendanceTitle: 'Student Attendance',
@@ -704,6 +721,15 @@ export const translations = {
     assignedSubjects: 'Maaddooyinka La Siiyay',
     assignedClasses: 'Fasalada La Siiyay',
     subjectsCommaHint: 'Kala saar kooma (tusaale: Xisaab, Af-Soomaali, Ingiriisi)',
+    bulkTeacherImportTitle: 'Soo Gelinta Macallimiinta Badan (Excel / CSV)',
+    bulkTeacherImportSubtitle: 'Soo deji qaabka Excel, soo geli faylka macallimiinta, hubi oo sax khaladaadka, ka dibna keydi kuwa saxda ah.',
+    teacherTemplateDesc: 'Isticmaal qaabkeenna rasmiga ah ee Excel oo leh dhammaan 7-da tiir ee macallimiinta iyo tusaalayaal.',
+    importAllTeachers: 'Soo Geli Dhammaan Macallimiinta',
+    importingTeachersProgress: 'Macallimiinta waxaa lagu keydinayaa xog-kaydiyaha...',
+    noValidTeachersToImport: 'Ma jiraan macallimiin sax ah oo diyaar u ah soo gelinta. Fadlan marka hore sax safafka khaldan.',
+    teacherImportCompleteTitle: 'Soo Gelinta Macallimiinta Waa Dhammaystirmay',
+    teacherImportCompleteMessage: 'Macallimiinta xogtoodu saxda ahayd si guul leh ayaa loogu keydiyay nidaamka dugsiga.',
+    autoGenTeacherIdToggle: 'Si otomaatig ah u samee Aqoonsiga Macallinka haddii uu bannaan yahay (TCH-001)',
 
     // Classes
     classesTitle: 'Fasalada & Maaddooyinka',
@@ -715,6 +741,14 @@ export const translations = {
     studentCount: 'Ardayda',
     subjects: 'Maaddooyinka',
     tuitionFee: 'Lacagta Fasalka',
+    bulkClassImportTitle: 'Soo Gelinta Fasalada & Maaddooyinka (Excel / CSV)',
+    bulkClassImportSubtitle: 'Soo deji qaabka Excel, soo geli faylka fasalada, hubi oo sax khaladaadka, ka dibna keydi fasalada saxda ah.',
+    classTemplateDesc: 'Isticmaal qaabkeenna rasmiga ah ee Excel oo leh 5-ta tiir (Magaca Fasalka, Sanad Dugsiyeedka, Macallinka Fasalka, Maaddooyinka, Lacagta).',
+    importAllClasses: 'Soo Geli Dhammaan Fasalada',
+    importingClassesProgress: 'Fasalada waxaa lagu keydinayaa xog-kaydiyaha...',
+    noValidClassesToImport: 'Ma jiraan fasalo sax ah oo diyaar u ah soo gelinta. Fadlan marka hore sax safafka khaldan.',
+    classImportCompleteTitle: 'Soo Gelinta Fasalada Waa Dhammaystirmay',
+    classImportCompleteMessage: 'Fasalada iyo maaddooyinka xogtoodu saxda ahayd si guul leh ayaa loogu keydiyay nidaamka dugsiga.',
 
     // Attendance
     attendanceTitle: 'Xaadirinta Ardayda',

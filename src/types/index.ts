@@ -488,3 +488,83 @@ export interface BulkImportCommitResponse {
   failedCount: number;
   rejectedRows: BulkImportRow[];
 }
+
+export interface BulkClassImportRow {
+  rowNumber: number;
+  name: string;
+  academicYear: string;
+  classTeacher: string;
+  subjectsText: string;
+  tuitionFee: string;
+  rowStatus: BulkRowValidationStatus;
+  errors: string[];
+  warnings: string[];
+  matchedTeacherId: string | null;
+  matchedTeacherLabel: string;
+  parsedSubjects: string[];
+  numericTuitionFee: number;
+}
+
+export interface BulkClassImportUploadResponse {
+  fileName: string;
+  headersDetected: string[];
+  rows: BulkClassImportRow[];
+  summary: BulkImportValidationSummary;
+  availableTeachers: Array<{ _id: string; teacherId: string; fullName: string; email: string }>;
+}
+
+export interface BulkClassImportValidateResponse {
+  rows: BulkClassImportRow[];
+  summary: BulkImportValidationSummary;
+  availableTeachers: Array<{ _id: string; teacherId: string; fullName: string; email: string }>;
+}
+
+export interface BulkClassImportCommitResponse {
+  totalProcessed: number;
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  failedCount: number;
+  rejectedRows: BulkClassImportRow[];
+}
+
+export interface BulkTeacherImportRow {
+  rowNumber: number;
+  teacherId: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  subjectsText: string;
+  classesText: string;
+  status: string;
+  rowStatus: BulkRowValidationStatus;
+  errors: string[];
+  warnings: string[];
+  parsedSubjects: string[];
+  matchedClassIds: string[];
+  matchedClassNames: string[];
+  normalizedStatus: 'Active' | 'Inactive';
+}
+
+export interface BulkTeacherImportUploadResponse {
+  fileName: string;
+  headersDetected: string[];
+  rows: BulkTeacherImportRow[];
+  summary: BulkImportValidationSummary;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string }>;
+}
+
+export interface BulkTeacherImportValidateResponse {
+  rows: BulkTeacherImportRow[];
+  summary: BulkImportValidationSummary;
+  availableClasses: Array<{ _id: string; name: string; academicYear: string }>;
+}
+
+export interface BulkTeacherImportCommitResponse {
+  totalProcessed: number;
+  importedCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  failedCount: number;
+  rejectedRows: BulkTeacherImportRow[];
+}
